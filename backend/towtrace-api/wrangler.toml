@@ -1,0 +1,3 @@
+name = "towtrace-api"
+main = "src/index.ts"
+compatibility_date = "2023-01-01"  # Required field; use a recent date
