@@ -1,0 +1,8 @@
+{
+  "extends": "@tsconfig/react-native/tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "esModuleInterop": true,
+    "types": ["@types/react", "@types/react-navigation", "@types/react-native-maps"]
+  }
+}

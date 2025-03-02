@@ -1,16 +1,25 @@
-import { Hono } from 'hono';
+import { D1Database, Request } from '@cloudflare/workers-types';  // Remove Response from the import
 
-const app = new Hono<{
-  Bindings: {
-    DB: D1Database;
-  };
-}>();
+export default {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const url = new URL(request.url);
+    const headers = {
+      'Access-Control-Allow-Origin': 'http://localhost:3000',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    };
 
-app.get('/jobs', async (c) => {
-  const { results } = await c.env.DB.prepare('SELECT * FROM jobs').all();
-  return c.json(results);
-});
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers });
+    }
 
-app.get('/', (c) => c.text('TowTrace API is live!'));
+    if (url.pathname === '/api/test') {
+      return new Response('TowTrace API is live!', { status: 200, headers });
+    }
+    return new Response('Welcome to TowTrace API', { status: 200, headers });
+  },
+};
 
-export default app;
+interface Env {
+  DB: D1Database;
+}
