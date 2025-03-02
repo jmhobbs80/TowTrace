@@ -1,45 +1,77 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Button, StyleSheet, Alert } from 'react-native';
-import MapView, { Marker, Region } from 'react-native-maps';
-import Geolocation from '@react-native-community/geolocation';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, Button, StyleSheet, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
+import MapView, { Marker, Polyline, Region, PROVIDER_GOOGLE } from 'react-native-maps';
+import Geolocation, { GeolocationResponse } from '@react-native-community/geolocation';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import axios, { AxiosError } from 'axios';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList, useAuth } from '../App'; // Consolidated import
+import { RootStackParamList } from '../types';
+import { useAuth } from '../hooks/useAuth';
+import { TrackingLocation } from '../types';
 
 export default function JobTracker({ navigation }: Readonly<NativeStackScreenProps<RootStackParamList, 'JobTracker'>>) {
-  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [location, setLocation] = useState<TrackingLocation | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [queuedLocations, setQueuedLocations] = useState<{ latitude: number; longitude: number }[]>([]);
+  const [queuedLocations, setQueuedLocations] = useState<TrackingLocation[]>([]);
+  const [trackingPath, setTrackingPath] = useState<TrackingLocation[]>([]);
+  const [isTracking, setIsTracking] = useState<boolean>(true);
+  const [jobStatus, setJobStatus] = useState<'active' | 'paused' | 'completed'>('active');
+  
   const { token } = useAuth();
+  const mapRef = useRef<MapView>(null);
+  const watchIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     const requestLocationPermission = async (): Promise<void> => {
       try {
-        // Geolocation.requestAuthorization() returns void or string for iOS; handle accordingly
         Geolocation.requestAuthorization();
-        // For Android, permissions are handled in AndroidManifest.xml; no need for await here
       } catch (err: any) {
         setErrorMsg('Error requesting location permission: ' + (err instanceof Error ? err.message : String(err)));
       }
     };
 
-    requestLocationPermission();
+    const startLocationTracking = (): void => {
+      if (watchIdRef.current !== null) {
+        Geolocation.clearWatch(watchIdRef.current);
+      }
+      
+      watchIdRef.current = Geolocation.watchPosition(
+        (position: GeolocationResponse) => {
+          const { latitude, longitude, speed } = position.coords;
+          const timestamp = new Date().toISOString();
+          
+          const newLocation: TrackingLocation = {
+            latitude,
+            longitude,
+            speed: speed || 0,
+            timestamp
+          };
+          
+          setLocation(newLocation);
+          setTrackingPath(prev => [...prev, newLocation]);
+          
+          if (isTracking) {
+            sendLocationUpdate(newLocation);
+          }
+          
+          setErrorMsg(null);
+        },
+        (error: any) => {
+          setErrorMsg('Geolocation error: ' + error.message);
+          console.error('Geolocation Error:', error);
+        },
+        { 
+          enableHighAccuracy: true, 
+          distanceFilter: 10, 
+          timeout: 10000, 
+          maximumAge: 1000 
+        }
+      );
+    };
 
-    const watchId = Geolocation.watchPosition(
-      (position: any) => { // Using 'any' temporarily; see note below for proper typing
-        const { latitude, longitude } = position.coords;
-        setLocation({ latitude, longitude });
-        sendLocationUpdate(latitude, longitude);
-        setErrorMsg(null);
-      },
-      (error: any) => { // Using 'any' temporarily; see note below
-        setErrorMsg('Geolocation error: ' + error.message);
-        console.error('Geolocation Error:', error);
-      },
-      { enableHighAccuracy: true, distanceFilter: 10, timeout: 10000, maximumAge: 1000 }
-    );
+    requestLocationPermission();
+    startLocationTracking();
 
     const unsubscribe = NetInfo.addEventListener((state: NetInfoState) => {
       setIsConnected(state.isConnected ?? false);
@@ -49,26 +81,29 @@ export default function JobTracker({ navigation }: Readonly<NativeStackScreenPro
     });
 
     return (): void => {
-      Geolocation.clearWatch(watchId);
+      if (watchIdRef.current !== null) {
+        Geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
       unsubscribe();
     };
-  }, []);
+  }, [isTracking]);
 
-  const sendLocationUpdate = async (latitude: number, longitude: number): Promise<void> => {
+  const sendLocationUpdate = async (locationData: TrackingLocation): Promise<void> => {
     const isConnected = await NetInfo.fetch().then(state => state.isConnected ?? false);
     if (!isConnected) {
-      setQueuedLocations(prev => [...prev, { latitude, longitude }]);
-      setErrorMsg('No internet connection. Location queued.');
+      setQueuedLocations(prev => [...prev, locationData]);
       return;
     }
+    
     try {
-      await axios.post('https://towtrace-api.justin-michael-hobbs.workers.dev/tracking/update', {
-        latitude,
-        longitude,
-      }, {
-        headers: { Authorization: `Bearer ${token ?? ''}` },
-      });
-      console.log('Location sent:', { latitude, longitude });
+      await axios.post('https://towtrace-api.justin-michael-hobbs.workers.dev/tracking/update', 
+        locationData, 
+        {
+          headers: { Authorization: `Bearer ${token ?? ''}` },
+        }
+      );
+      console.log('Location sent:', locationData);
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         setErrorMsg('API Error: ' + (error as AxiosError).message);
@@ -76,14 +111,12 @@ export default function JobTracker({ navigation }: Readonly<NativeStackScreenPro
           message: (error as AxiosError).message,
           status: (error as AxiosError).response?.status,
           data: (error as AxiosError).response?.data,
-          request: (error as AxiosError).request,
-          config: (error as AxiosError).config,
         });
       } else {
         setErrorMsg('Unexpected Error: ' + (error instanceof Error ? error.message : String(error)));
         console.error('Unexpected Error:', error);
       }
-      setQueuedLocations(prev => [...prev, { latitude, longitude }]);
+      setQueuedLocations(prev => [...prev, locationData]);
     }
   };
 
@@ -93,10 +126,18 @@ export default function JobTracker({ navigation }: Readonly<NativeStackScreenPro
 
     for (const queuedLocation of queuedLocations) {
       try {
-        await axios.post('https://towtrace-api.justin-michael-hobbs.workers.dev/tracking/update', queuedLocation, {
-          headers: { Authorization: `Bearer ${token ?? ''}` },
-        });
-        setQueuedLocations(prev => prev.filter(loc => loc.latitude !== queuedLocation.latitude && loc.longitude !== queuedLocation.longitude));
+        await axios.post('https://towtrace-api.justin-michael-hobbs.workers.dev/tracking/update', 
+          queuedLocation, 
+          {
+            headers: { Authorization: `Bearer ${token ?? ''}` },
+          }
+        );
+        
+        setQueuedLocations(prev => 
+          prev.filter(loc => 
+            loc.timestamp !== queuedLocation.timestamp)
+        );
+        
         console.log('Synced queued location:', queuedLocation);
       } catch (error: unknown) {
         console.error('Sync Error:', error);
@@ -106,8 +147,63 @@ export default function JobTracker({ navigation }: Readonly<NativeStackScreenPro
     }
   };
 
-  if (errorMsg) return <Text style={styles.error}>{errorMsg}</Text>;
-  if (!location) return <Text>Loading location...</Text>;
+  const toggleTracking = (): void => {
+    setIsTracking(prev => !prev);
+    if (!isTracking) {
+      Alert.alert('Tracking Resumed', 'Location tracking has been resumed');
+    } else {
+      Alert.alert('Tracking Paused', 'Location tracking has been paused');
+    }
+  };
+
+  const completeJob = async (): Promise<void> => {
+    try {
+      const isConnected = await NetInfo.fetch().then(state => state.isConnected ?? false);
+      if (!isConnected) {
+        Alert.alert('Error', 'Cannot complete job while offline');
+        return;
+      }
+      
+      await axios.post('https://towtrace-api.justin-michael-hobbs.workers.dev/jobs/complete', 
+        { 
+          trackingPath,
+          completedAt: new Date().toISOString() 
+        }, 
+        {
+          headers: { Authorization: `Bearer ${token ?? ''}` },
+        }
+      );
+      
+      setJobStatus('completed');
+      Alert.alert('Success', 'Job marked as completed', [
+        {
+          text: 'Continue to Inspection',
+          onPress: () => navigation.navigate('Inspection')
+        }
+      ]);
+    } catch (error: unknown) {
+      console.error('Job Completion Error:', error);
+      Alert.alert('Error', 'Failed to mark job as completed: ' + (error instanceof Error ? error.message : String(error)));
+    }
+  };
+
+  if (errorMsg) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.error}>{errorMsg}</Text>
+        <Button title="Try Again" onPress={() => navigation.replace('JobTracker')} />
+      </View>
+    );
+  }
+  
+  if (!location) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text>Loading location...</Text>
+      </View>
+    );
+  }
 
   const region: Region = {
     latitude: location.latitude,
@@ -119,17 +215,77 @@ export default function JobTracker({ navigation }: Readonly<NativeStackScreenPro
   return (
     <View style={styles.container}>
       <MapView
-        style={StyleSheet.absoluteFill}
+        ref={mapRef}
+        style={styles.map}
+        provider={PROVIDER_GOOGLE}
         region={region}
         showsUserLocation
         followsUserLocation
-        onRegionChangeComplete={(region: Region) => console.log('Region changed:', region)}
+        showsCompass
+        showsScale
       >
-        <Marker coordinate={location} title="Your Location" />
+        <Marker 
+          coordinate={{
+            latitude: location.latitude,
+            longitude: location.longitude
+          }}
+          title="Current Location" 
+          description={`Speed: ${location.speed ? Math.round(location.speed * 2.237) : 0} mph`}
+        />
+        
+        {trackingPath.length > 1 && (
+          <Polyline
+            coordinates={trackingPath.map(point => ({
+              latitude: point.latitude,
+              longitude: point.longitude
+            }))}
+            strokeColor="#007AFF"
+            strokeWidth={4}
+          />
+        )}
       </MapView>
-      <Text>Network: {isConnected ? 'Online' : 'Offline'}</Text>
-      <Button title="Go to Inspection" onPress={() => navigation.navigate('Inspection')} />
-      {queuedLocations.length > 0 && <Text style={styles.queueInfo}>Queued Locations: {queuedLocations.length}</Text>}
+      
+      <View style={styles.statusBar}>
+        <Text style={styles.statusText}>
+          Network: {isConnected ? 'Online' : 'Offline'}
+        </Text>
+        <Text style={styles.statusText}>
+          Tracking: {isTracking ? 'Active' : 'Paused'}
+        </Text>
+        {queuedLocations.length > 0 && (
+          <Text style={styles.queueInfo}>
+            Queued Locations: {queuedLocations.length}
+          </Text>
+        )}
+      </View>
+      
+      <View style={styles.controls}>
+        <TouchableOpacity 
+          style={[styles.button, isTracking ? styles.activeButton : styles.inactiveButton]} 
+          onPress={toggleTracking}
+        >
+          <Text style={styles.buttonText}>
+            {isTracking ? 'Pause Tracking' : 'Resume Tracking'}
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.button, styles.completeButton]} 
+          onPress={completeJob}
+          disabled={jobStatus === 'completed'}
+        >
+          <Text style={styles.buttonText}>
+            {jobStatus === 'completed' ? 'Job Completed' : 'Complete Job'}
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.button, styles.inspectionButton]} 
+          onPress={() => navigation.navigate('Inspection')}
+        >
+          <Text style={styles.buttonText}>Go to Inspection</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -138,19 +294,70 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  error: {
+  map: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  error: {
     textAlign: 'center',
     padding: 20,
     color: 'red',
+    marginBottom: 20,
+  },
+  statusBar: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    right: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 10,
+    borderRadius: 10,
+  },
+  statusText: {
+    marginVertical: 2,
   },
   queueInfo: {
+    marginTop: 5,
+    color: '#007AFF',
+    fontWeight: 'bold',
+  },
+  controls: {
     position: 'absolute',
-    bottom: 10,
+    bottom: 20,
     left: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    padding: 5,
-    borderRadius: 5,
-    color: 'blue',
+    right: 10,
+  },
+  button: {
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  activeButton: {
+    backgroundColor: '#FF9500',
+  },
+  inactiveButton: {
+    backgroundColor: '#34C759',
+  },
+  completeButton: {
+    backgroundColor: '#007AFF',
+  },
+  inspectionButton: {
+    backgroundColor: '#5856D6',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });

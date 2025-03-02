@@ -5,7 +5,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleDisplayName</key>
-    <string>TowTrace Dispatch</string>
+    <string>TowTrace Driver</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -17,11 +17,11 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>$(MARKETING_VERSION)</string>
+    <string>1.0</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleVersion</key>
-    <string>$(CURRENT_PROJECT_VERSION)</string>
+    <string>1</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>NSAppTransportSecurity</key>
@@ -38,13 +38,13 @@
     
     <!-- Required permissions -->
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>TowTrace needs access to your location to track fleet vehicles and job progress.</string>
+    <string>TowTrace needs access to your location to track job progress and provide real-time updates.</string>
     <key>NSLocationAlwaysUsageDescription</key>
-    <string>TowTrace needs to access your location to track fleet vehicles even when the app is in the background.</string>
+    <string>TowTrace needs to access your location in the background to continue tracking job progress.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>TowTrace needs to access your location to track fleet vehicles and job progress.</string>
+    <string>TowTrace needs to access your location to track job progress and provide real-time updates.</string>
     <key>NSCameraUsageDescription</key>
-    <string>TowTrace needs access to your camera to scan VINs and register new vehicles.</string>
+    <string>TowTrace needs access to your camera to scan VINs and take vehicle photos.</string>
     
     <!-- Deep linking for OAuth -->
     <key>CFBundleURLTypes</key>
@@ -53,10 +53,10 @@
             <key>CFBundleTypeRole</key>
             <string>Editor</string>
             <key>CFBundleURLName</key>
-            <string>TowTraceDispatch</string>
+            <string>TowTraceDriver</string>
             <key>CFBundleURLSchemes</key>
             <array>
-                <string>towtraceDispatch</string>
+                <string>towtracedriver</string>
             </array>
         </dict>
     </array>

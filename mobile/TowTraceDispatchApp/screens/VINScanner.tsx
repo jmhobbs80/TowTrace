@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Alert, Button, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { Camera, useCameraDevices, CameraDevice, Code, CodeScannerFrame } from 'react-native-vision-camera';
 import axios, { AxiosError } from 'axios';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types';
+import { RootStackParamList, Vehicle } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import NetInfo from '@react-native-community/netinfo';
 
@@ -11,16 +11,19 @@ import NetInfo from '@react-native-community/netinfo';
 interface CameraDevices {
   back?: CameraDevice;
   front?: CameraDevice;
-  // Add other camera positions as needed (e.g., external)
 }
 
 export default function VINScanner({ navigation }: Readonly<NativeStackScreenProps<RootStackParamList, 'VINScanner'>>) {
   const [hasPermission, setHasPermission] = useState<boolean>(false);
   const [vin, setVin] = useState<string | null>(null);
-  const [queuedScans, setQueuedScans] = useState<string[]>([]);
-  const devices = useCameraDevices() as CameraDevices; // Cast to our custom type
-  const { token } = useAuth(); // Use useAuth in a React component or hook context
-  const device = devices?.back; // Use 'back' directly, type-casted for safety
+  const [queuedVins, setQueuedVins] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [scannedVehicles, setScannedVehicles] = useState<Vehicle[]>([]);
+  
+  const devices = useCameraDevices() as CameraDevices;
+  const { token } = useAuth();
+  const device = devices?.back;
+  const camera = useRef<Camera>(null);
 
   useEffect(() => {
     checkCameraPermission();
@@ -28,8 +31,7 @@ export default function VINScanner({ navigation }: Readonly<NativeStackScreenPro
 
   const checkCameraPermission = async (): Promise<void> => {
     const status = await Camera.requestCameraPermission();
-    console.log('Camera permission status:', status);
-    setHasPermission(status === 'granted'); // Use string value 'granted' (simplified for compatibility)
+    setHasPermission(status === 'granted');
     if (status !== 'granted') {
       Alert.alert('Permission Needed', 'Please grant camera access in settings to scan VINs.');
     }
@@ -40,19 +42,33 @@ export default function VINScanner({ navigation }: Readonly<NativeStackScreenPro
       Alert.alert('Error', 'Invalid VIN format. VIN must be 17 characters.');
       return;
     }
+    
+    setVin(barcodeData);
     const isConnected = await NetInfo.fetch().then(state => state.isConnected ?? false);
+    
     try {
       if (!isConnected) {
-        setQueuedScans(prev => [...prev, barcodeData]);
+        setQueuedVins(prev => [...prev, barcodeData]);
         Alert.alert('Offline', 'VIN scan queued. Will sync when online.');
         return;
       }
-      setVin(barcodeData);
-      await axios.post('https://towtrace-api.justin-michael-hobbs.workers.dev/vin/scan', { vin: barcodeData }, {
-        headers: { Authorization: `Bearer ${token ?? ''}` }, // Handle undefined token
-      });
-      Alert.alert('Success', 'VIN Scanned and Saved: ' + barcodeData);
-      navigation.navigate('JobTracker');
+      
+      setIsSubmitting(true);
+      // Upload the VIN 
+      const response = await axios.post('https://towtrace-api.justin-michael-hobbs.workers.dev/fleet/vehicles/register', 
+        { vin: barcodeData }, 
+        {
+          headers: { Authorization: `Bearer ${token ?? ''}` },
+        }
+      );
+      
+      // Add to scanned vehicles list
+      if (response.data) {
+        setScannedVehicles(prev => [response.data, ...prev]);
+      }
+      
+      Alert.alert('Success', `VIN Scanned and Registered: ${barcodeData}`);
+      setVin(null); // Reset for new scan
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError;
@@ -60,70 +76,169 @@ export default function VINScanner({ navigation }: Readonly<NativeStackScreenPro
           message: axiosError.message,
           status: axiosError.response?.status,
           data: axiosError.response?.data,
-          request: axiosError.request,
-          config: axiosError.config,
         });
-        Alert.alert('Error', 'Failed to scan VIN: ' + axiosError.message);
+        Alert.alert('Error', 'Failed to register VIN: ' + axiosError.message);
       } else {
         console.error('Unexpected Error:', error);
-        Alert.alert('Error', 'Failed to scan VIN: ' + (error instanceof Error ? error.message : String(error)));
+        Alert.alert('Error', 'Failed to register VIN: ' + (error instanceof Error ? error.message : String(error)));
       }
+      
       if (!isConnected) {
-        setQueuedScans(prev => [...prev, barcodeData]);
+        setQueuedVins(prev => [...prev, barcodeData]);
         Alert.alert('Offline', 'VIN scan queued. Will sync when online.');
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const syncQueuedScans = async (): Promise<void> => {
+  const syncQueuedVins = async (): Promise<void> => {
     const isConnected = await NetInfo.fetch().then(state => state.isConnected ?? false);
-    if (!isConnected || queuedScans.length === 0) return;
+    if (!isConnected || queuedVins.length === 0) return;
 
-    for (const queuedVin of queuedScans) {
-      try {
-        await axios.post('https://towtrace-api.justin-michael-hobbs.workers.dev/vin/scan', { vin: queuedVin }, {
-          headers: { Authorization: `Bearer ${token ?? ''}` },
-        });
-        setQueuedScans(prev => prev.filter(vin => vin !== queuedVin));
-        Alert.alert('Success', `Synced queued VIN: ${queuedVin}`);
-      } catch (error: unknown) {
-        console.error('Sync Error:', error);
-        Alert.alert('Error', 'Failed to sync queued VIN: ' + (error instanceof Error ? error.message : String(error)));
-        break; // Stop syncing if an error occurs
+    setIsSubmitting(true);
+    
+    try {
+      for (const queuedVin of queuedVins) {
+        try {
+          const response = await axios.post(
+            'https://towtrace-api.justin-michael-hobbs.workers.dev/fleet/vehicles/register', 
+            { vin: queuedVin }, 
+            {
+              headers: { Authorization: `Bearer ${token ?? ''}` },
+            }
+          );
+          
+          // Add to scanned vehicles list
+          if (response.data) {
+            setScannedVehicles(prev => [response.data, ...prev]);
+          }
+          
+          setQueuedVins(prev => prev.filter(v => v !== queuedVin));
+          Alert.alert('Success', `Synced queued VIN: ${queuedVin}`);
+        } catch (error: unknown) {
+          console.error('Sync Error:', error);
+          break; // Stop syncing if an error occurs
+        }
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
       if (state.isConnected) {
-        syncQueuedScans();
+        syncQueuedVins();
       }
     });
     return () => unsubscribe();
-  }, [queuedScans]);
+  }, [queuedVins]);
+
+  const navigateToFleetTracker = (): void => {
+    navigation.navigate('FleetTracker');
+  };
 
   if (!hasPermission) return <Text>Camera permission denied</Text>;
   if (!device) return <Text>Loading camera...</Text>;
 
   return (
     <View style={styles.container}>
-      <Camera
-        style={StyleSheet.absoluteFill}
-        device={device}
-        isActive={true}
-        codeScanner={{
-          codeTypes: ['code-39', 'qr', 'ean-13'], // Use kebab-case for codeTypes (e.g., 'code-39')
-          onCodeScanned: (codes: Code[], frame: CodeScannerFrame) => {
-            console.log('Scanned codes:', codes);
-            if (codes.length > 0) {
-              scanVIN(codes[0].value ?? '');
-            }
-          },
-        }}
-      />
-      {vin && <Text>Scanned VIN: {vin}</Text>}
-      {queuedScans.length > 0 && <Text style={styles.queueInfo}>Queued VIN Scans: {queuedScans.length}</Text>}
+      <View style={styles.cameraContainer}>
+        <Camera
+          ref={camera}
+          style={styles.camera}
+          device={device}
+          isActive={true}
+          codeScanner={{
+            codeTypes: ['code-39', 'qr', 'ean-13', 'code-128', 'pdf-417', 'aztec'],
+            onCodeScanned: (codes: Code[], frame: CodeScannerFrame) => {
+              if (codes.length > 0 && !vin && !isSubmitting) {
+                setVin(codes[0].value ?? '');
+              }
+            },
+          }}
+        />
+      </View>
+      
+      <View style={styles.controls}>
+        <View style={styles.scanInfo}>
+          {vin ? (
+            <>
+              <Text style={styles.scanText}>Scanned VIN: {vin}</Text>
+              <View style={styles.buttonRow}>
+                <TouchableOpacity 
+                  style={[styles.button, styles.secondaryButton]} 
+                  onPress={() => setVin(null)}
+                  disabled={isSubmitting}
+                >
+                  <Text style={styles.buttonText}>Clear</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.button, styles.primaryButton]}
+                  onPress={() => scanVIN(vin)}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <ActivityIndicator size="small" color="white" />
+                  ) : (
+                    <Text style={styles.buttonText}>Register Vehicle</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <Text style={styles.scanText}>Point camera at VIN barcode</Text>
+          )}
+        </View>
+
+        {queuedVins.length > 0 && (
+          <TouchableOpacity 
+            style={[styles.syncButton]} 
+            onPress={syncQueuedVins}
+            disabled={isSubmitting}
+          >
+            <Text style={styles.syncButtonText}>
+              Sync Queued VINs ({queuedVins.length})
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+      
+      {/* Recently scanned vehicles */}
+      {scannedVehicles.length > 0 && (
+        <View style={styles.scannedContainer}>
+          <Text style={styles.scannedTitle}>
+            Recently Scanned Vehicles ({scannedVehicles.length})
+          </Text>
+          <ScrollView style={styles.scannedList}>
+            {scannedVehicles.map((vehicle, index) => (
+              <View key={index} style={styles.vehicleItem}>
+                <View style={styles.vehicleInfo}>
+                  <Text style={styles.vehicleVin}>
+                    VIN: {vehicle.vin}
+                  </Text>
+                  <Text style={styles.vehicleId}>
+                    ID: {vehicle.id}
+                  </Text>
+                  <Text style={styles.vehicleStatus}>
+                    Status: {vehicle.status}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+      
+      <TouchableOpacity
+        style={styles.fleetButton}
+        onPress={navigateToFleetTracker}
+      >
+        <Text style={styles.fleetButtonText}>
+          Go to Fleet Tracker
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -131,12 +246,114 @@ export default function VINScanner({ navigation }: Readonly<NativeStackScreenPro
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  cameraContainer: {
+    flex: 1,
+    overflow: 'hidden',
+    borderRadius: 12,
+    margin: 12,
+  },
+  camera: {
+    flex: 1,
+  },
+  controls: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    margin: 12,
+    marginTop: 0,
+  },
+  scanInfo: {
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+  scanText: {
+    fontSize: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  button: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
     justifyContent: 'center',
+    minWidth: 120,
+  },
+  primaryButton: {
+    backgroundColor: '#4287f5',
+  },
+  secondaryButton: {
+    backgroundColor: '#e0e0e0',
+  },
+  buttonText: {
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  syncButton: {
+    backgroundColor: '#4CAF50',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  syncButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  scannedContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    margin: 12,
+    marginTop: 0,
+    padding: 16,
+    flex: 1,
+  },
+  scannedTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  scannedList: {
+    flex: 1,
+  },
+  vehicleItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  vehicleInfo: {
+    flex: 1,
+  },
+  vehicleVin: {
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  vehicleId: {
+    fontSize: 12,
+    color: '#666',
+  },
+  vehicleStatus: {
+    fontSize: 12,
+    color: '#4287f5',
+    marginTop: 4,
+  },
+  fleetButton: {
+    backgroundColor: '#4287f5',
+    padding: 16,
+    margin: 12,
+    borderRadius: 8,
     alignItems: 'center',
   },
-  queueInfo: {
-    marginTop: 10,
-    textAlign: 'center',
-    color: 'blue',
+  fleetButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
