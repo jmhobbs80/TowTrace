@@ -32,6 +32,7 @@
     "@types/react": "^19.0.10",
     "@types/react-navigation": "^3.4.0",
     "@types/react-native-maps": "^1.10.0",
+    "@types/axios": "^0.14.0",
     "@react-native-community/cli": "^12.3.5",
     "typescript": "^5.8.2"
   }
