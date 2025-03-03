@@ -1,103 +1,84 @@
 /** @type {import('next').NextConfig} */
-
-/**
- * TowTrace Dashboard Next.js configuration
- * - Sets up security headers including Content-Security-Policy
- * - Configures environment variables handling
- */
 const nextConfig = {
-  // Server configuration
+  // React strict mode for better development experience
   reactStrictMode: true,
-  swcMinify: true,
   
-  // Security headers configuration
+  // Output standalone build for improved performance and deployment options
+  output: 'standalone',
+  
+  // Custom headers for improved security
   async headers() {
-    // Skip CSP in development mode
-    if (process.env.NODE_ENV === 'development') {
-      return [];
-    }
-    
     return [
       {
-        source: '/(.*)',
+        // Apply these headers to all routes
+        source: '/:path*',
         headers: [
           {
-            key: 'Content-Security-Policy',
-            value: `
-              default-src 'self';
-              script-src 'self' 'unsafe-inline' 'unsafe-eval';
-              style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-              img-src 'self' data: https://api.mapbox.com https://*.tiles.mapbox.com blob:;
-              font-src 'self' https://fonts.gstatic.com;
-              connect-src 'self' https://towtrace-api.justin-michael-hobbs.workers.dev https://api.mapbox.com;
-              frame-src 'self' https://accounts.google.com https://api.quickbooks.com;
-              worker-src 'self' blob:;
-            `.replace(/\s+/g, ' ').trim(),
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on'
           },
           {
             key: 'X-XSS-Protection',
-            value: '1; mode=block',
+            value: '1; mode=block'
           },
           {
             key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
+            value: 'SAMEORIGIN'
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff',
+            value: 'nosniff'
           },
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(self)',
-          },
-        ],
-      },
-    ];
-  },
-
-  // Force HTTPS and handle domain redirects (only in production)
-  async redirects() {
-    // Skip redirects in development mode
-    if (process.env.NODE_ENV === 'development') {
-      return [];
-    }
-    
-    return [
-      {
-        source: '/(.*)',
-        has: [
-          {
-            type: 'header',
-            key: 'x-forwarded-proto',
-            value: 'http',
-          },
-        ],
-        destination: 'https://www.towtrace.com/:1',
-        permanent: true,
-      },
-      {
-        source: '/(.*)',
-        has: [
-          {
-            type: 'host',
-            value: 'towtrace.com', // Redirect non-www to www
-          },
-        ],
-        destination: 'https://www.towtrace.com/:1',
-        permanent: true,
-      },
+            value: 'strict-origin-when-cross-origin'
+          }
+        ]
+      }
     ];
   },
   
-  // Image optimization configuration
+  // Image configuration for optimization
   images: {
-    domains: ['towtrace-api.justin-michael-hobbs.workers.dev'],
-    formats: ['image/avif', 'image/webp'],
+    domains: ['i.pravatar.cc'], // Allow avatar images from pravatar
+    formats: ['image/avif', 'image/webp']
   },
+  
+  // Environment variables accessible in the browser
+  // For sensitive variables, use .env.local which is not committed to the repo
+  env: {
+    NEXT_PUBLIC_API_URL: 'https://towtrace-api.justin-michael-hobbs.workers.dev',
+    NEXT_PUBLIC_SITE_URL: 'https://www.towtrace.com',
+  },
+  
+  // Redirects for cleaner URLs
+  async redirects() {
+    return [
+      {
+        source: '/dashboard',
+        destination: '/dashboard',
+        permanent: true,
+      }
+    ];
+  },
+  
+  // Set trailing slash to false for cleaner URLs
+  trailingSlash: false,
+  
+  // Compiler options
+  compiler: {
+    // Remove console.* in production
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
+  },
+  
+  // For production environments, enable React production optimizations
+  // Additional optimizations for production build
+  swcMinify: true,
+  
+  // Disable the x-powered-by header for security
+  poweredByHeader: false,
 };
 
 module.exports = nextConfig;
