@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TowTrace Dashboard
 
-## Getting Started
+A comprehensive transport management solution for towing and transport businesses, offering real-time GPS tracking, driver dispatch, fleet management, and more.
 
-First, run the development server:
+## Development Setup
+
+### Prerequisites
+
+- Node.js 20.10.0 or later
+- Yarn 3.6.4 or npm 10.5.0
+
+### Getting Started
+
+1. Install dependencies:
+
+```bash
+npm install
+# or
+yarn install
+```
+
+2. Run the development server:
 
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Development Mode Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+In development mode, the following features work with mocks:
 
-## Learn More
+- **Authentication**: A mock user is provided without needing real Auth0 credentials
+- **QuickBooks Integration**: Mock endpoints for connecting to QuickBooks
+- **API Endpoints**: Local mock implementations of backend API endpoints
 
-To learn more about Next.js, take a look at the following resources:
+## Recent Dependency Updates
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+All dependencies have been updated to ensure compatibility:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **React Versions**:
+   - Using React 18.2.0 (stable version)
+   - Aligned React DOM version with React
 
-## Deploy on Vercel
+2. **Auth0 Integration**:
+   - Using @auth0/nextjs-auth0 version 2.0.0
+   - Development mode works with mock authentication
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. **Next.js**:
+   - Using Next.js 14.1.0 (stable version)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4. **React Query**:
+   - Using @tanstack/react-query version 4.32.6
+
+## Configuration for Production
+
+For production deployment, you need to set up the following:
+
+### Auth0 Configuration
+
+Create a `.env.local` file in the root directory with the following variables:
+
+```
+# Auth0 Configuration
+AUTH0_SECRET='your-auth0-secret'
+AUTH0_BASE_URL='https://your-domain.com'
+AUTH0_ISSUER_BASE_URL='https://your-tenant.auth0.com'
+AUTH0_CLIENT_ID='your-auth0-client-id'
+AUTH0_CLIENT_SECRET='your-auth0-client-secret'
+AUTH0_AUDIENCE='your-api-identifier'
+```
+
+### QuickBooks Integration
+
+Add the following environment variables for QuickBooks integration:
+
+```
+# QuickBooks Configuration
+QUICKBOOKS_CLIENT_ID='your-quickbooks-client-id'
+QUICKBOOKS_CLIENT_SECRET='your-quickbooks-client-secret'
+QUICKBOOKS_REDIRECT_URI='https://your-domain.com/api/quickbooks/callback'
+QUICKBOOKS_SANDBOX=true # Set to false for production
+```
+
+## Project Structure
+
+- `src/app/`: Main application code
+  - `api/`: API routes (Auth0, QuickBooks, etc.)
+  - `dashboard/`: Dashboard pages
+  - `providers/`: React context providers
+  - `page.tsx`: Landing page
+  - `layout.tsx`: Root layout
+- `public/`: Static assets
+
+## Features
+
+- Multi-Vehicle VIN Scanning
+- Real-Time GPS Tracking
+- Driver Dispatch & Load Management
+- Fleet Management & Inspections
+- QuickBooks Integration
+- Temporary Storage Tracking
