@@ -44,3 +44,12 @@ Microsoft.PowerShell_profile.ps1
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.env*
+node_modules/
+Microsoft.PowerShell_profile.ps1
+.next/
+mobile\*\build\
+mobile\*\ios\build\
+mobile\*\android\build\
+frontend\towtrace-dashboard\.next\
+backend\towtrace-api\dist\

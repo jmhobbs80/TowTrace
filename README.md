@@ -2,7 +2,7 @@
 
 TowTrace is a comprehensive fleet management and towing operations platform built for towing companies, offering a complete solution with mobile apps for drivers and dispatchers, plus a web dashboard for administrators and fleet managers.
 
-## 🚚 Overview
+##  Overview
 
 TowTrace streamlines towing operations with:
 
@@ -11,7 +11,7 @@ TowTrace streamlines towing operations with:
 - **Web Dashboard**: Administrative console for operations management, reporting, and system configuration
 - **Backend API**: Cloud-based API running on Cloudflare Workers for seamless data synchronization
 
-## ✨ Features
+##  Features
 
 - **Comprehensive Vehicle Management**
   - VIN scanning with photo documentation
@@ -42,7 +42,7 @@ TowTrace streamlines towing operations with:
   - Automatic synchronization when connectivity returns
   - Data conflict resolution
 
-## 🛠️ Architecture
+##  Architecture
 
 TowTrace is built using modern technologies:
 
@@ -51,7 +51,7 @@ TowTrace is built using modern technologies:
 - **Backend API**: Cloudflare Workers with Hono.js and D1 Database
 - **Authentication**: Google OAuth with JWT tokens
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 
@@ -102,7 +102,7 @@ npm run dev
 # API available at http://localhost:8787
 ```
 
-## 📱 Mobile App Features
+##  Mobile App Features
 
 ### Driver App
 - VIN scanning with camera
@@ -130,10 +130,10 @@ npm run dev
 - Multi-tenant management
 - Subscription control
 
-## 📝 License
+##  License
 
 Proprietary - All rights reserved
 
-## 📞 Contact
+##  Contact
 
 For more information, visit [www.towtrace.com](https://www.towtrace.com)
