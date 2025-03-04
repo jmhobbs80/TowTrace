@@ -26,30 +26,30 @@
       "static/chunks/main-app.js",
       "static/chunks/app/dashboard/layout.js"
     ],
-    "/dashboard/profile/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/profile/page.js"
-    ],
-    "/dashboard/vehicles/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/vehicles/page.js"
-    ],
     "/dashboard/drivers/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/dashboard/drivers/page.js"
     ],
-    "/dashboard/jobs/page": [
+    "/dashboard/overwatch/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/jobs/page.js"
+      "static/chunks/app/dashboard/overwatch/page.js"
+    ],
+    "/dashboard/drivers/edit/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/drivers/edit/[id]/page.js"
     ],
     "/dashboard/inspections/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/dashboard/inspections/page.js"
+    ],
+    "/dashboard/inspections/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/inspections/[id]/page.js"
     ],
     "/dashboard/settings/page": [
       "static/chunks/webpack.js",
@@ -60,21 +60,6 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/dashboard/eld-logs/page.js"
-    ],
-    "/dashboard/jobs/scan/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/jobs/scan/page.js"
-    ],
-    "/dashboard/drivers/edit/[id]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/drivers/edit/[id]/page.js"
-    ],
-    "/dashboard/vehicles/scan/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/vehicles/scan/page.js"
     ]
   }
 }

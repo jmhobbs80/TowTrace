@@ -120,7 +120,7 @@ npm run dev
 - Customer management
 - Advanced routing
 
-## 🖥️ Dashboard Features
+##  Dashboard Features
 
 - Administrative controls
 - Fleet management
