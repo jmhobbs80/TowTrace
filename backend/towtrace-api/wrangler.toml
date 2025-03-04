@@ -1,0 +1,8 @@
+name = "towtrace-api"
+main = "src/index.ts"  # Point to the TypeScript entry file
+compatibility_date = "2025-03-01"  # Use today’s date or adjust as needed
+
+[[d1_databases]]
+binding = "DB"
+database_name = "towtrace-db"
+database_id = "858f46b2-0ef3-485e-9987-cc244c55868e"  

@@ -1,0 +1,11 @@
+{
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/vehicles/page": "app/dashboard/vehicles/page.js",
+  "/dashboard/drivers/page": "app/dashboard/drivers/page.js",
+  "/dashboard/jobs/page": "app/dashboard/jobs/page.js",
+  "/dashboard/eld-logs/page": "app/dashboard/eld-logs/page.js",
+  "/dashboard/settings/page": "app/dashboard/settings/page.js",
+  "/dashboard/vehicles/scan/page": "app/dashboard/vehicles/scan/page.js",
+  "/dashboard/drivers/edit/[id]/page": "app/dashboard/drivers/edit/[id]/page.js",
+  "/dashboard/jobs/scan/page": "app/dashboard/jobs/scan/page.js"
+}
