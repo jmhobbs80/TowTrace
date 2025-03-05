@@ -1,12 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function VehiclesPage() {
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [filteredVehicles, setFilteredVehicles] = useState([]);
+  const [debounceTimeout, setDebounceTimeout] = useState(null);
   const [driverOptions, setDriverOptions] = useState([
     { id: 1, name: 'John Smith' },
     { id: 2, name: 'Sarah Johnson' },
@@ -37,6 +41,60 @@ export default function VehiclesPage() {
     setIsEditModalOpen(false);
     alert('Vehicle updated successfully!');
   };
+  
+  // Debounced search handler to prevent too many filter operations
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    
+    // Clear any existing timeout
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout);
+    }
+    
+    // Set a new timeout to delay filtering
+    const timeout = setTimeout(() => {
+      filterVehicles(value, statusFilter);
+    }, 300); // 300ms debounce time
+    
+    setDebounceTimeout(timeout);
+  };
+  
+  // Handler for status filter changes
+  const handleStatusChange = (e) => {
+    const value = e.target.value;
+    setStatusFilter(value);
+    filterVehicles(searchTerm, value);
+  };
+  
+  // Function to filter vehicles based on search term and status
+  const filterVehicles = (search, status) => {
+    let results = vehicles;
+    
+    // Apply status filter if not 'all'
+    if (status !== 'all') {
+      results = results.filter(vehicle => vehicle.status === status);
+    }
+    
+    // Apply search filter if search term exists
+    if (search) {
+      const term = search.toLowerCase();
+      results = results.filter(vehicle => 
+        vehicle.vin.toLowerCase().includes(term) ||
+        vehicle.make.toLowerCase().includes(term) ||
+        vehicle.model.toLowerCase().includes(term) ||
+        vehicle.driver.toLowerCase().includes(term) ||
+        vehicle.year.toString().includes(term)
+      );
+    }
+    
+    setFilteredVehicles(results);
+  };
+  
+  // Initialize filtered vehicles with all vehicles
+  useEffect(() => {
+    setFilteredVehicles(vehicles);
+  }, []);
   
   // Sample vehicles data with extended information
   const vehicles = [
@@ -273,14 +331,8 @@ export default function VehiclesPage() {
           <p className="text-gray-600">Track and manage your fleet</p>
         </div>
         <div className="flex space-x-3">
-          <Link href="/dashboard/vehicles/scan" className="btn btn-primary flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mr-1">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5z" />
-            </svg>
-            Scan VIN
-          </Link>
-          <Link href="/dashboard/vehicles/new" className="btn btn-secondary flex items-center">
+          {/* VIN Scan button removed as requested */}
+          <Link href="/dashboard/vehicles/new" className="btn btn-primary flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mr-1">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
@@ -298,6 +350,8 @@ export default function VehiclesPage() {
                 <input 
                   type="text" 
                   placeholder="Search vehicles..." 
+                  value={searchTerm}
+                  onChange={handleSearch}
                   className="pl-9 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
                 />
                 <div className="absolute left-3 top-2.5 text-gray-400">
@@ -307,11 +361,16 @@ export default function VehiclesPage() {
                 </div>
               </div>
             </div>
-            <select className="border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            <select 
+              className="border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              value={statusFilter}
+              onChange={handleStatusChange}
+            >
               <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="maintenance">Maintenance</option>
-              <option value="available">Available</option>
+              <option value="Active">Active</option>
+              <option value="Maintenance">Maintenance</option>
+              <option value="Available">Available</option>
+              <option value="In Service">In Service</option>
             </select>
           </div>
         </div>
@@ -330,7 +389,8 @@ export default function VehiclesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {vehicles.map(vehicle => (
+              {filteredVehicles.length > 0 ? (
+                filteredVehicles.map(vehicle => (
                 <tr key={vehicle.id} className="hover:bg-gray-50">
                   <td className="py-3 px-4">{vehicle.id}</td>
                   <td className="py-3 px-4 font-medium">{vehicle.vin}</td>
@@ -383,7 +443,14 @@ export default function VehiclesPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )))
+              : (
+                <tr>
+                  <td colSpan={8} className="py-6 text-center text-gray-500">
+                    No vehicles found matching your criteria.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

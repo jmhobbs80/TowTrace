@@ -952,6 +952,9 @@ select {
 .pointer-events-none {
   pointer-events: none;
 }
+.static {
+  position: static;
+}
 .fixed {
   position: fixed;
 }
@@ -1791,6 +1794,10 @@ select {
 .bg-gray-500 {
   --tw-bg-opacity: 1;
   background-color: rgb(107 114 128 / var(--tw-bg-opacity));
+}
+.bg-gray-600 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(75 85 99 / var(--tw-bg-opacity));
 }
 .bg-gray-900 {
   --tw-bg-opacity: 1;
@@ -2713,6 +2720,11 @@ body {
 .hover\:bg-gray-50:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(249 250 251 / var(--tw-bg-opacity));
+}
+
+.hover\:bg-gray-700:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(55 65 81 / var(--tw-bg-opacity));
 }
 
 .hover\:bg-green-200:hover {

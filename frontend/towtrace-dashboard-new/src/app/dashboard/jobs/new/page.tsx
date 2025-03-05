@@ -33,7 +33,6 @@ export default function NewJobPage() {
   const [formData, setFormData] = useState({
     client: '',
     phone: '',
-    email: '',
     pickupLocation: '',
     dropoffLocation: '',
     vehicleType: 'car',
@@ -60,14 +59,33 @@ export default function NewJobPage() {
     { id: '4', name: 'Emily Davis' },
   ];
   
-  // Sample vehicle data for dropdown
-  const vehicles = [
+  // Vehicles for dropdown with API fetch
+  const [vehicles, setVehicles] = useState([
     { id: '1', name: 'Honda Accord (#1235)' },
     { id: '2', name: 'Toyota Camry (#1236)' },
     { id: '3', name: 'Ford F-150 (#1237)' },
     { id: '4', name: 'Chevrolet Malibu (#1238)' },
     { id: '5', name: 'BMW X5 (#1239)' },
-  ];
+  ]);
+  
+  // Fetch vehicles from API - in real implementation this would be an actual API call
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      try {
+        // This would be replaced with an actual API call
+        // const response = await fetch('/api/vehicles');
+        // const data = await response.json();
+        // setVehicles(data);
+        
+        // For now, we're just using the static data
+        console.log('Would fetch vehicles from API in production');
+      } catch (error) {
+        console.error('Error fetching vehicles:', error);
+      }
+    };
+    
+    fetchVehicles();
+  }, []);
 
   // Sample client data for search
   const clients: Client[] = [
@@ -112,7 +130,6 @@ export default function NewJobPage() {
       ...formData,
       client: client.name,
       phone: client.phone,
-      email: client.email,
     });
     setShowClientSearch(false);
     setSearchTerm('');
@@ -298,19 +315,7 @@ export default function NewJobPage() {
                 />
               </div>
               
-              <div className="mb-4">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-              </div>
+              {/* Email field removed as unnecessary */}
             </div>
             
             <div>

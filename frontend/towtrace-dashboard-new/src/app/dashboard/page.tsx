@@ -235,7 +235,7 @@ export default function DashboardPage() {
           </div>
         </Link>
         
-        <Link href="/dashboard/jobs" className="card flex flex-col md:flex-row items-center justify-between p-6 card-hover no-underline">
+        <Link href="/dashboard/jobs?status=completed" className="card flex flex-col md:flex-row items-center justify-between p-6 card-hover no-underline">
           <div className="mb-4 md:mb-0">
             <div className="text-gray-500 text-sm font-medium mb-1">Completed Jobs</div>
             <div className="text-3xl font-bold text-gray-900">42</div>

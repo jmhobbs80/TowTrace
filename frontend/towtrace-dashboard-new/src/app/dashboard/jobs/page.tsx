@@ -1,8 +1,15 @@
 'use client';
 
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 export default function JobsPage() {
+  const searchParams = useSearchParams();
+  const statusParam = searchParams.get('status');
+  const [statusFilter, setStatusFilter] = useState(statusParam || 'all');
+  const [searchTerm, setSearchTerm] = useState('');
+  
   // Sample jobs data
   const jobs = [
     { id: 101, client: "ABC Corp", phone: "(555) 111-2222", pickupLocation: "123 Main St, Anytown", dropoffLocation: "456 Oak Ave, Othertown", driver: "John Smith", vehicle: "Honda Accord", status: "In Progress", createdAt: "2023-05-15 09:30", eta: "2023-05-15 13:45" },
@@ -11,6 +18,51 @@ export default function JobsPage() {
     { id: 104, client: "Global Industries", phone: "(555) 777-8888", pickupLocation: "888 Birch St, Townsville", dropoffLocation: "999 Spruce Ave, Cityville", driver: "Sarah Johnson", vehicle: "Chevrolet Malibu", status: "Completed", createdAt: "2023-05-13 08:00", eta: "2023-05-13 12:30" },
     { id: 105, client: "Local Business", phone: "(555) 999-0000", pickupLocation: "111 Cherry Ln, Downtown", dropoffLocation: "222 Apple St, Uptown", driver: "Emily Davis", vehicle: "BMW X5", status: "Cancelled", createdAt: "2023-05-14 16:45", eta: "N/A" },
   ];
+  
+  // Initialize filtered jobs with all jobs or filtered by status if provided in URL
+  const [filteredJobs, setFilteredJobs] = useState(() => {
+    if (statusParam && statusParam === 'completed') {
+      return jobs.filter(job => job.status === 'Completed');
+    }
+    return jobs;
+  });
+  
+  // Filter jobs based on search term and status
+  useEffect(() => {
+    // Convert status filter to match the case in the data
+    const formattedStatus = statusFilter === 'completed' ? 'Completed' : 
+                            statusFilter === 'in-progress' ? 'In Progress' :
+                            statusFilter === 'scheduled' ? 'Scheduled' :
+                            statusFilter === 'pending' ? 'Pending' :
+                            statusFilter === 'cancelled' ? 'Cancelled' : '';
+    
+    let filtered = jobs;
+    
+    // Apply status filter if not 'all'
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(job => job.status === formattedStatus);
+    }
+    
+    // Apply search filter if search term exists
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(job => 
+        job.client.toLowerCase().includes(term) ||
+        job.driver.toLowerCase().includes(term) ||
+        job.pickupLocation.toLowerCase().includes(term) ||
+        job.dropoffLocation.toLowerCase().includes(term) ||
+        job.id.toString().includes(term)
+      );
+    }
+    
+    setFilteredJobs(filtered);
+  }, [statusFilter, searchTerm, jobs]);
+  
+  // Debounce function for search
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+  };
   
   return (
     <>
@@ -38,6 +90,8 @@ export default function JobsPage() {
                 <input 
                   type="text" 
                   placeholder="Search jobs..." 
+                  value={searchTerm}
+                  onChange={handleSearch}
                   className="pl-9 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
                 />
                 <div className="absolute left-3 top-2.5 text-gray-400">
@@ -47,7 +101,11 @@ export default function JobsPage() {
                 </div>
               </div>
             </div>
-            <select className="border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            <select 
+              className="border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
               <option value="all">All Status</option>
               <option value="in-progress">In Progress</option>
               <option value="scheduled">Scheduled</option>
@@ -73,59 +131,67 @@ export default function JobsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {jobs.map(job => (
-                <tr key={job.id} className="hover:bg-gray-50">
-                  <td className="py-3 px-4 font-medium">#{job.id}</td>
-                  <td className="py-3 px-4">
-                    <div>{job.client}</div>
-                    <div className="text-xs text-gray-500">{job.phone}</div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="truncate max-w-[200px]">{job.pickupLocation}</div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="truncate max-w-[200px]">{job.dropoffLocation}</div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div>{job.driver}</div>
-                    <div className="text-xs text-gray-500">{job.vehicle}</div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`inline-block px-2 py-1 text-xs rounded-full ${
-                      job.status === 'In Progress' 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : job.status === 'Scheduled' 
-                        ? 'bg-purple-100 text-purple-800' 
-                        : job.status === 'Pending'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : job.status === 'Completed'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {job.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-gray-500">
-                    <div>{job.createdAt}</div>
-                    <div className="text-xs">ETA: {job.eta}</div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex space-x-2">
-                      <Link href={`/dashboard/jobs/${job.id}`} className="text-gray-600 hover:text-primary-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                      </Link>
-                      <Link href={`/dashboard/jobs/${job.id}/edit`} className="text-gray-600 hover:text-primary-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                        </svg>
-                      </Link>
-                    </div>
+              {filteredJobs.length > 0 ? (
+                filteredJobs.map(job => (
+                  <tr key={job.id} className="hover:bg-gray-50">
+                    <td className="py-3 px-4 font-medium">#{job.id}</td>
+                    <td className="py-3 px-4">
+                      <div>{job.client}</div>
+                      <div className="text-xs text-gray-500">{job.phone}</div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="truncate max-w-[200px]">{job.pickupLocation}</div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="truncate max-w-[200px]">{job.dropoffLocation}</div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div>{job.driver}</div>
+                      <div className="text-xs text-gray-500">{job.vehicle}</div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                        job.status === 'In Progress' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : job.status === 'Scheduled' 
+                          ? 'bg-purple-100 text-purple-800' 
+                          : job.status === 'Pending'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : job.status === 'Completed'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {job.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-gray-500">
+                      <div>{job.createdAt}</div>
+                      <div className="text-xs">ETA: {job.eta}</div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex space-x-2">
+                        <Link href={`/dashboard/jobs/${job.id}`} className="text-gray-600 hover:text-primary-600">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        </Link>
+                        <Link href={`/dashboard/jobs/${job.id}/edit`} className="text-gray-600 hover:text-primary-600">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                          </svg>
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} className="py-6 text-center text-gray-500">
+                    No jobs found matching your criteria.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

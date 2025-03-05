@@ -9,6 +9,112 @@ const API_BASE_URL = 'https://towtrace-api.justin-michael-hobbs.workers.dev';
  * Service for interacting with ELD-related API endpoints (driver version)
  */
 export class EldService {
+  // GPS tracking interval in milliseconds
+  private static LOADED_TRACKING_INTERVAL = 10000; // 10 seconds when loaded
+  private static UNLOADED_TRACKING_INTERVAL = 60000; // 60 seconds when unloaded
+  private static trackingTimer: NodeJS.Timeout | null = null;
+  private static isTracking = false;
+  private static isLoaded = false;
+  
+  /**
+   * Start GPS tracking with battery-friendly implementation
+   * @param isLoaded - Whether the driver is currently loaded (has cargo)
+   * @returns void
+   */
+  static startBatteryFriendlyTracking(isLoaded: boolean): void {
+    // Stop any existing tracking
+    this.stopTracking();
+    
+    // Set loaded status
+    this.isLoaded = isLoaded;
+    
+    // Set tracking as active
+    this.isTracking = true;
+    
+    // Determine appropriate interval based on load status
+    const interval = isLoaded 
+      ? this.LOADED_TRACKING_INTERVAL 
+      : this.UNLOADED_TRACKING_INTERVAL;
+    
+    // Start tracking at the determined interval
+    this.trackingTimer = setInterval(async () => {
+      try {
+        // Get current position
+        const position = await new Promise<any>((resolve, reject) => {
+          Geolocation.getCurrentPosition(
+            (pos) => resolve(pos),
+            (error) => reject(error),
+            { 
+              enableHighAccuracy: isLoaded, // High accuracy only when loaded to save battery
+              timeout: 15000, 
+              maximumAge: isLoaded ? 5000 : 30000 // Allow older positions when unloaded
+            }
+          );
+        });
+        
+        // Get authentication token
+        const token = await AsyncStorage.getItem('authToken');
+        if (!token) throw new Error('Not authenticated');
+        
+        // Prepare location update
+        const locationData = {
+          device_serial: await AsyncStorage.getItem('eldDeviceSerial') || 'MOBILE_APP',
+          timestamp: new Date().toISOString(),
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          speed: position.coords.speed || 0,
+          accuracy: position.coords.accuracy,
+          is_loaded: isLoaded
+        };
+        
+        // Send location update to API
+        await axios.post(
+          `${API_BASE_URL}/api/tracking/location`,
+          locationData,
+          {
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      } catch (error) {
+        console.error('Error updating GPS location:', error);
+        
+        // Store offline if network error
+        const isConnected = await NetInfo.fetch().then(state => state.isConnected);
+        if (!isConnected) {
+          // Queue the location update for when connection is restored
+          // Implementation would be similar to HOS offline queue
+        }
+      }
+    }, interval);
+  }
+  
+  /**
+   * Stop GPS tracking
+   * @returns void
+   */
+  static stopTracking(): void {
+    if (this.trackingTimer) {
+      clearInterval(this.trackingTimer);
+      this.trackingTimer = null;
+    }
+    this.isTracking = false;
+  }
+  
+  /**
+   * Update load status and adjust tracking interval accordingly
+   * @param isLoaded - Whether the driver is currently loaded
+   * @returns void
+   */
+  static updateLoadStatus(isLoaded: boolean): void {
+    // Only restart tracking if load status has changed
+    if (this.isLoaded !== isLoaded && this.isTracking) {
+      this.startBatteryFriendlyTracking(isLoaded);
+    }
+    this.isLoaded = isLoaded;
+  }
   /**
    * Check if the current tenant has ELD access
    * @returns Promise resolving to boolean indicating access
