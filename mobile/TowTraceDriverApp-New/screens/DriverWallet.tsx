@@ -10,11 +10,14 @@ import {
   Image,
   Platform,
   PermissionsAndroid,
+  TextInput,
+  Modal,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import NetInfo from '@react-native-community/netinfo';
 import axios from 'axios';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import Card from '../components/Card';
 import useAuth from '../hooks/useAuth';
 
@@ -33,25 +36,36 @@ interface DocumentItem {
 
 // Document types that can be added to the driver wallet
 const DOCUMENT_TYPES = [
-  { id: 'license', title: 'Driver\'s License', required: true },
-  { id: 'medical', title: 'Medical Card', required: true },
-  { id: 'ifta', title: 'IFTA License', required: false },
-  { id: 'insurance', title: 'Insurance Card', required: true },
-  { id: 'vehicle_reg', title: 'Vehicle Registration', required: true },
-  { id: 'eld_manual', title: 'ELD Manual', required: false },
-  { id: 'dot_card', title: 'DOT Card', required: true },
-  { id: 'company_id', title: 'Company ID', required: false },
-  { id: 'other', title: 'Other Document', required: false },
+  { id: 'license', title: 'Driver\'s License', required: true, expiryRequired: true },  // Driver's License requires expiry
+  { id: 'medical', title: 'Medical Card', required: true, expiryRequired: true },       // Health card requires expiry
+  { id: 'ifta', title: 'IFTA License', required: false, expiryRequired: true },         // IFTA license requires expiry
+  { id: 'insurance', title: 'Insurance Card', required: true, expiryRequired: true },   // Truck insurance requires expiry
+  { id: 'vehicle_reg', title: 'Vehicle Registration', required: true, expiryRequired: true }, // Registration requires expiry
+  { id: 'eld_manual', title: 'ELD Manual', required: false, expiryRequired: false },
+  { id: 'dot_card', title: 'DOT Card', required: true, expiryRequired: true },          // DOT card requires expiry
+  { id: 'company_id', title: 'Company ID', required: false, expiryRequired: false },
+  { id: 'other', title: 'Other Document', required: false, expiryRequired: false },
 ];
 
+// Document types that require expiration date
+const EXPIRY_REQUIRED_DOCUMENTS = ['license', 'medical', 'ifta', 'insurance', 'vehicle_reg', 'dot_card'];
+
 const DriverWallet: React.FC = () => {
-  const { token } = useAuth();
+  const { token, subscription } = useAuth();
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [pendingUploads, setPendingUploads] = useState<DocumentItem[]>([]);
   const [selectedDocType, setSelectedDocType] = useState<string | null>(null);
+  
+  // Document form state
+  const [documentNumber, setDocumentNumber] = useState<string>('');
+  const [expiryDate, setExpiryDate] = useState<Date>(new Date());
+  const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
+  
+  // Check if user has premium features
+  const hasPremiumFeatures = subscription === 'premium' || subscription === 'enterprise';
 
   useEffect(() => {
     // Check network connectivity
@@ -191,14 +205,66 @@ const DriverWallet: React.FC = () => {
     }
   };
 
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setExpiryDate(selectedDate);
+    }
+  };
+
   const handleAddDocument = () => {
+    // Reset form fields
+    setDocumentNumber('');
+    setExpiryDate(new Date());
+    
     // Show document type selection
     Alert.alert(
       'Select Document Type',
       'Choose the type of document to add:',
       DOCUMENT_TYPES.map(type => ({
         text: type.title,
-        onPress: () => setSelectedDocType(type.id)
+        onPress: () => {
+          setSelectedDocType(type.id);
+          
+          // If document type requires expiry date, show date picker first
+          if (EXPIRY_REQUIRED_DOCUMENTS.includes(type.id)) {
+            // First prompt for document number
+            Alert.prompt(
+              `Enter ${type.title} Number`,
+              'Please enter the document number or ID',
+              [
+                {
+                  text: 'Cancel',
+                  onPress: () => setSelectedDocType(null),
+                  style: 'cancel',
+                },
+                {
+                  text: 'Next',
+                  onPress: (docNumber) => {
+                    setDocumentNumber(docNumber || '');
+                    // Now show date picker for expiry
+                    setShowDatePicker(true);
+                    Alert.alert(
+                      'Set Expiration Date',
+                      'This document requires an expiration date',
+                      [
+                        {
+                          text: 'Set Date',
+                          onPress: () => setShowDatePicker(true)
+                        }
+                      ],
+                      { cancelable: false }
+                    );
+                  }
+                }
+              ],
+              'plain-text'
+            );
+          } else {
+            // If no expiry date required, proceed directly to image selection
+            handleImageSelection();
+          }
+        }
       })),
       { cancelable: true }
     );
@@ -247,12 +313,14 @@ const DriverWallet: React.FC = () => {
       
       if (result.didCancel) {
         console.log('User cancelled camera');
+        setSelectedDocType(null);
         return;
       }
       
       if (result.errorCode) {
         console.log('Camera Error: ', result.errorMessage);
         Alert.alert('Error', result.errorMessage || 'Error capturing image');
+        setSelectedDocType(null);
         return;
       }
       
@@ -262,6 +330,9 @@ const DriverWallet: React.FC = () => {
         // Create new document
         const docType = DOCUMENT_TYPES.find(type => type.id === selectedDocType);
         
+        // Include expiry date and document number if provided for required documents
+        const isExpiryRequired = EXPIRY_REQUIRED_DOCUMENTS.includes(selectedDocType);
+        
         const newDocument: DocumentItem = {
           id: Date.now().toString(),
           type: selectedDocType,
@@ -269,6 +340,10 @@ const DriverWallet: React.FC = () => {
           imageUri: capturedImage.uri,
           syncStatus: isConnected ? 'pending' : 'failed',
           lastUpdated: new Date().toISOString(),
+          // Add expiry date if required
+          ...(isExpiryRequired && { expiryDate: expiryDate.toISOString() }),
+          // Add document number if provided
+          ...(documentNumber && { documentNumber }),
         };
         
         // Add to documents list
@@ -316,12 +391,15 @@ const DriverWallet: React.FC = () => {
           setPendingUploads([...pendingUploads, newDocument]);
         }
         
-        // Reset selected doc type
+        // Reset form state
         setSelectedDocType(null);
+        setDocumentNumber('');
+        setExpiryDate(new Date());
       }
     } catch (error) {
       console.error('Error capturing image:', error);
       Alert.alert('Error', 'Failed to capture image. Please try again.');
+      setSelectedDocType(null);
     }
   };
 
@@ -338,12 +416,14 @@ const DriverWallet: React.FC = () => {
       
       if (result.didCancel) {
         console.log('User cancelled image selection');
+        setSelectedDocType(null);
         return;
       }
       
       if (result.errorCode) {
         console.log('Image Library Error: ', result.errorMessage);
         Alert.alert('Error', result.errorMessage || 'Error selecting image');
+        setSelectedDocType(null);
         return;
       }
       
@@ -353,6 +433,9 @@ const DriverWallet: React.FC = () => {
         // Create new document
         const docType = DOCUMENT_TYPES.find(type => type.id === selectedDocType);
         
+        // Include expiry date and document number if provided for required documents
+        const isExpiryRequired = EXPIRY_REQUIRED_DOCUMENTS.includes(selectedDocType);
+        
         const newDocument: DocumentItem = {
           id: Date.now().toString(),
           type: selectedDocType,
@@ -360,6 +443,10 @@ const DriverWallet: React.FC = () => {
           imageUri: selectedImage.uri,
           syncStatus: isConnected ? 'pending' : 'failed',
           lastUpdated: new Date().toISOString(),
+          // Add expiry date if required
+          ...(isExpiryRequired && { expiryDate: expiryDate.toISOString() }),
+          // Add document number if provided
+          ...(documentNumber && { documentNumber }),
         };
         
         // Add to documents list
@@ -404,12 +491,15 @@ const DriverWallet: React.FC = () => {
           }
         }
         
-        // Reset selected doc type
+        // Reset form state
         setSelectedDocType(null);
+        setDocumentNumber('');
+        setExpiryDate(new Date());
       }
     } catch (error) {
       console.error('Error selecting image:', error);
       Alert.alert('Error', 'Failed to select image. Please try again.');
+      setSelectedDocType(null);
     }
   };
 
@@ -507,10 +597,32 @@ const DriverWallet: React.FC = () => {
   };
 
   const renderDocumentItem = (document: DocumentItem) => {
+    // Check if document has expiry date
+    const hasExpiry = document.expiryDate !== undefined;
+    
+    // Calculate days until expiry if expiry date exists
+    let daysUntilExpiry: number | null = null;
+    let isExpired = false;
+    
+    if (hasExpiry) {
+      const today = new Date();
+      const expiryDate = new Date(document.expiryDate as string);
+      const timeDiff = expiryDate.getTime() - today.getTime();
+      daysUntilExpiry = Math.ceil(timeDiff / (1000 * 3600 * 24));
+      isExpired = daysUntilExpiry < 0;
+    }
+    
+    // Should this document require an expiry date?
+    const shouldHaveExpiry = EXPIRY_REQUIRED_DOCUMENTS.includes(document.type);
+    const isMissingRequiredExpiry = shouldHaveExpiry && !hasExpiry;
+    
     return (
       <TouchableOpacity
         key={document.id}
-        style={styles.documentItem}
+        style={[
+          styles.documentItem,
+          isExpired && styles.expiredDocumentItem
+        ]}
         onPress={() => handleViewDocument(document)}
       >
         <View style={styles.documentImageContainer}>
@@ -528,9 +640,35 @@ const DriverWallet: React.FC = () => {
         </View>
         <View style={styles.documentInfo}>
           <Text style={styles.documentTitle}>{document.title}</Text>
+          {document.documentNumber && (
+            <Text style={styles.documentNumber}>
+              ID: {document.documentNumber}
+            </Text>
+          )}
           <Text style={styles.documentDate}>
             Updated: {new Date(document.lastUpdated).toLocaleDateString()}
           </Text>
+          
+          {/* Expiry date information */}
+          {hasExpiry && (
+            <Text style={[
+              styles.expiryDate, 
+              (daysUntilExpiry as number) <= 30 ? styles.expiryWarning : null,
+              isExpired ? styles.expiryExpired : null
+            ]}>
+              {isExpired 
+                ? `Expired: ${new Date(document.expiryDate as string).toLocaleDateString()}`
+                : `Expires: ${new Date(document.expiryDate as string).toLocaleDateString()} (${daysUntilExpiry} days)`}
+            </Text>
+          )}
+          
+          {/* Warning for missing expiry date */}
+          {isMissingRequiredExpiry && (
+            <Text style={styles.missingExpiryWarning}>
+              Missing expiry date!
+            </Text>
+          )}
+          
           <View style={[
             styles.syncStatusBadge, 
             document.syncStatus === 'synced' 
@@ -629,6 +767,17 @@ const DriverWallet: React.FC = () => {
               </Text>
             )}
           </TouchableOpacity>
+        )}
+        
+        {/* Date Picker for document expiry */}
+        {showDatePicker && (
+          <DateTimePicker
+            value={expiryDate}
+            mode="date"
+            display="default"
+            onChange={handleDateChange}
+            minimumDate={new Date()} // Can't select dates in the past
+          />
         )}
         
         {renderRequiredDocuments()}
@@ -803,6 +952,35 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  documentNumber: {
+    fontSize: 12,
+    color: '#333333',
+    marginBottom: 4,
+  },
+  expiryDate: {
+    fontSize: 12,
+    color: '#333333',
+    marginBottom: 4,
+    fontWeight: '500',
+  },
+  expiryWarning: {
+    color: '#FF9500',
+    fontWeight: 'bold',
+  },
+  expiryExpired: {
+    color: '#FF3B30',
+    fontWeight: 'bold',
+  },
+  missingExpiryWarning: {
+    color: '#FF3B30',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  expiredDocumentItem: {
+    borderLeftWidth: 3,
+    borderLeftColor: '#FF3B30',
   },
 });
 

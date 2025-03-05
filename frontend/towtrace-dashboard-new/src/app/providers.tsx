@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react';
 import { AuthProvider } from './context/auth-context';
+import { NotificationProvider } from './context/notification-context';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -10,7 +11,9 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
   return (
     <AuthProvider>
-      {children}
+      <NotificationProvider>
+        {children}
+      </NotificationProvider>
     </AuthProvider>
   );
 }

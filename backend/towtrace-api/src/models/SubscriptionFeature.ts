@@ -15,7 +15,10 @@ export const AVAILABLE_FEATURES = [
   'ai_insights',
   'advanced_routing',
   'customer_portal',
-  'law_enforcement_tools'
+  'law_enforcement_tools',
+  'driver_document_wallet',           // Driver document storage feature
+  'document_expiration_tracking',     // Document expiration tracking and notifications
+  'realtime_gps_tracking'             // Enhanced real-time GPS tracking (1-3 second refresh)
 ] as const;
 
 // SubscriptionFeature Schema for validation
@@ -57,6 +60,7 @@ export const DEFAULT_FEATURES = {
     'job_management',
     'fleet_management',
     'inspection_reports',
+    'driver_document_wallet',           // Available for all plans
   ],
   premium: [
     'vin_scanning',
@@ -68,6 +72,9 @@ export const DEFAULT_FEATURES = {
     'storage_tracking',
     'eld_integration',
     'advanced_analytics',
+    'driver_document_wallet',           // Available for all plans
+    'document_expiration_tracking',     // Premium and above
+    'realtime_gps_tracking',            // Premium and above
   ],
   enterprise: [
     'vin_scanning',
@@ -83,6 +90,9 @@ export const DEFAULT_FEATURES = {
     'ai_insights',
     'advanced_routing',
     'customer_portal',
-    'law_enforcement_tools'
+    'law_enforcement_tools',
+    'driver_document_wallet',           // Available for all plans
+    'document_expiration_tracking',     // Premium and above
+    'realtime_gps_tracking',            // Premium and above
   ],
 };

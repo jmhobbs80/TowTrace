@@ -80,3 +80,89 @@ export function checkRole(
 ): boolean {
   return allowedRoles.includes(tokenPayload.role);
 }
+
+/**
+ * Check if a user has system admin privileges
+ * @param tokenPayload - The decoded JWT token payload
+ * @returns Boolean indicating if the user is a system admin
+ */
+export function isSystemAdmin(tokenPayload: TokenPayload): boolean {
+  return tokenPayload.role === 'system_admin';
+}
+
+/**
+ * Check if a user has tenant admin privileges
+ * @param tokenPayload - The decoded JWT token payload
+ * @returns Boolean indicating if the user is a tenant admin
+ */
+export function isTenantAdmin(tokenPayload: TokenPayload): boolean {
+  return ['admin', 'client_admin'].includes(tokenPayload.role);
+}
+
+/**
+ * Check if a user has dispatcher privileges
+ * @param tokenPayload - The decoded JWT token payload
+ * @returns Boolean indicating if the user is a dispatcher
+ */
+export function isDispatcher(tokenPayload: TokenPayload): boolean {
+  return ['dispatcher', 'admin', 'client_admin', 'system_admin'].includes(tokenPayload.role);
+}
+
+/**
+ * Check if a user has driver privileges
+ * @param tokenPayload - The decoded JWT token payload
+ * @returns Boolean indicating if the user is a driver
+ */
+export function isDriver(tokenPayload: TokenPayload): boolean {
+  return tokenPayload.role === 'driver';
+}
+
+/**
+ * Check if a user has any admin privileges (system or tenant)
+ * @param tokenPayload - The decoded JWT token payload
+ * @returns Boolean indicating if the user has any admin privileges
+ */
+export function hasAdminPrivileges(tokenPayload: TokenPayload): boolean {
+  return ['admin', 'client_admin', 'system_admin'].includes(tokenPayload.role);
+}
+
+/**
+ * Middleware to require admin privileges
+ * @param tokenPayload - The decoded JWT token payload
+ * @throws Error if the user is not an admin
+ */
+export function requireAdmin(tokenPayload: TokenPayload): void {
+  if (!hasAdminPrivileges(tokenPayload)) {
+    throw new Error('Forbidden: Admin privileges required');
+  }
+}
+
+/**
+ * Middleware to require system admin privileges
+ * @param tokenPayload - The decoded JWT token payload
+ * @throws Error if the user is not a system admin
+ */
+export function requireSystemAdmin(tokenPayload: TokenPayload): void {
+  if (!isSystemAdmin(tokenPayload)) {
+    throw new Error('Forbidden: System admin privileges required');
+  }
+}
+
+/**
+ * Middleware to require the user to be the owner of a resource or have admin privileges
+ * @param tokenPayload - The decoded JWT token payload
+ * @param resourceOwnerId - The ID of the resource owner
+ * @returns Boolean indicating if the user has permission
+ */
+export function isResourceOwnerOrAdmin(
+  tokenPayload: TokenPayload,
+  resourceOwnerId: string
+): boolean {
+  // User is the resource owner
+  if (tokenPayload.userId === resourceOwnerId) {
+    return true;
+  }
+  
+  // User has admin privileges
+  return hasAdminPrivileges(tokenPayload);
+}

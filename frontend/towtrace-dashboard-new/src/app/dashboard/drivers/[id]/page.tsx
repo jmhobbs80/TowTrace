@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
+import { format, isBefore, addDays, parseISO } from 'date-fns';
 
 // Define driver and job types
 type Coordinates = {
@@ -27,6 +28,18 @@ type Load = {
   estimatedArrival: string;
 };
 
+type DriverDocument = {
+  id: string;
+  documentType: string;
+  title: string;
+  documentNumber: string | null;
+  expiryDate: string | null;
+  requiresExpiry: boolean;
+  imageUri: string;
+  syncStatus: 'synced' | 'pending' | 'failed';
+  lastUpdated: string;
+};
+
 type Driver = {
   id: number;
   name: string;
@@ -47,6 +60,7 @@ type Driver = {
   pendingJobs: number;
   inTransitJobs: number;
   loads: Load[];
+  documents: DriverDocument[];
 };
 
 export default function DriverDetailPage() {
@@ -61,6 +75,7 @@ export default function DriverDetailPage() {
   const [markers, setMarkers] = useState<any[]>([]);
   const [showMap, setShowMap] = useState<boolean>(true);
   const [selectedLoad, setSelectedLoad] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<'jobs' | 'documents'>('jobs');
   
   // Get driver data (simulated API call)
   useEffect(() => {
@@ -91,6 +106,41 @@ export default function DriverDetailPage() {
           completedJobs: 137,
           pendingJobs: 3,
           inTransitJobs: 5,
+          documents: [
+            {
+              id: "doc1",
+              documentType: "license",
+              title: "Driver License",
+              documentNumber: "DL12345678",
+              expiryDate: "2025-06-15T00:00:00Z",
+              requiresExpiry: true,
+              imageUri: "https://example.com/license.jpg",
+              syncStatus: "synced",
+              lastUpdated: "2025-01-10T09:30:00Z"
+            },
+            {
+              id: "doc2",
+              documentType: "medical",
+              title: "Medical Card",
+              documentNumber: "MC98765432",
+              expiryDate: "2025-04-20T00:00:00Z",
+              requiresExpiry: true,
+              imageUri: "https://example.com/medical.jpg",
+              syncStatus: "synced", 
+              lastUpdated: "2025-01-15T14:20:00Z"
+            },
+            {
+              id: "doc3",
+              documentType: "dot_card",
+              title: "DOT Card",
+              documentNumber: "DOT3456789",
+              expiryDate: "2025-03-10T00:00:00Z",
+              requiresExpiry: true,
+              imageUri: "https://example.com/dot.jpg",
+              syncStatus: "synced",
+              lastUpdated: "2025-01-05T11:15:00Z"
+            }
+          ],
           loads: [
             {
               id: 1,
@@ -673,92 +723,236 @@ export default function DriverDetailPage() {
           </div>
           
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Current Loads ({driver.loads.length})</h2>
-              <div>
-                <Link href="/dashboard/jobs/new" className="text-sm text-primary-600 hover:text-primary-700 flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                  </svg>
-                  Assign New Load
-                </Link>
-              </div>
+            <div className="flex border-b border-gray-200 mb-4">
+              <button 
+                className={`py-3 px-4 text-sm font-medium border-b-2 ${
+                  activeTab === 'jobs' 
+                    ? 'border-primary-500 text-primary-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+                onClick={() => setActiveTab('jobs')}
+              >
+                Current Loads ({driver.loads.length})
+              </button>
+              <button 
+                className={`py-3 px-4 text-sm font-medium border-b-2 ${
+                  activeTab === 'documents' 
+                    ? 'border-primary-500 text-primary-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+                onClick={() => setActiveTab('documents')}
+              >
+                Documents ({driver.documents.length})
+              </button>
             </div>
             
-            <div className="space-y-4">
-              {driver.loads.map((load) => (
-                <div 
-                  key={load.id} 
-                  className={`border rounded-lg overflow-hidden transition-all cursor-pointer ${
-                    selectedLoad === load.id 
-                      ? 'border-primary-500 shadow-md' 
-                      : 'border-gray-200 hover:border-primary-300'
-                  }`}
-                  onClick={() => setSelectedLoad(load.id)}
-                >
-                  <div className="border-b border-gray-100 bg-gray-50 px-4 py-2 flex justify-between items-center">
-                    <div className="font-medium">{load.vehicleYear} {load.vehicleMake} {load.vehicleModel}</div>
-                    <span className={`inline-block px-2 py-1 text-xs rounded-full ${
-                      load.status === 'In Transit' 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : load.status === 'Completed' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {load.status}
-                    </span>
-                  </div>
-                  <div className="p-4">
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <div className="text-xs text-gray-500 mb-1">VIN</div>
-                        <div className="text-sm font-mono">{load.vin}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500 mb-1">Customer</div>
-                        <div className="text-sm">{load.customer}</div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start mb-3">
-                      <div className="mt-1 flex-shrink-0">
-                        <span className="flex h-4 w-4 items-center justify-center rounded-full border border-green-500 bg-white text-xs font-medium text-green-500">P</span>
-                      </div>
-                      <div className="ml-3">
-                        <div className="text-sm font-medium text-gray-900">Pickup</div>
-                        <div className="text-sm text-gray-600">{load.pickupLocation}</div>
-                      </div>
-                    </div>
-                    
-                    <div className="ml-2 pl-2 border-l-2 border-dashed border-gray-300 h-6"></div>
-                    
-                    <div className="flex items-start">
-                      <div className="mt-1 flex-shrink-0">
-                        <span className="flex h-4 w-4 items-center justify-center rounded-full border border-red-500 bg-white text-xs font-medium text-red-500">D</span>
-                      </div>
-                      <div className="ml-3">
-                        <div className="text-sm font-medium text-gray-900">Dropoff</div>
-                        <div className="text-sm text-gray-600">{load.dropoffLocation}</div>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4 flex justify-between text-sm text-gray-500">
-                      <div>Assigned: {load.timeAssigned}</div>
-                      <div>ETA: {load.estimatedArrival}</div>
-                    </div>
+            {activeTab === 'jobs' && (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold">Current Loads</h2>
+                  <div>
+                    <Link href="/dashboard/jobs/new" className="text-sm text-primary-600 hover:text-primary-700 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                      </svg>
+                      Assign New Load
+                    </Link>
                   </div>
                 </div>
-              ))}
-              
-              {driver.loads.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="mx-auto h-12 w-12 text-gray-300 mb-3">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-                  </svg>
-                  <p>No active loads assigned to this driver</p>
+                
+                <div className="space-y-4">
+                  {driver.loads.map((load) => (
+                    <div 
+                      key={load.id} 
+                      className={`border rounded-lg overflow-hidden transition-all cursor-pointer ${
+                        selectedLoad === load.id 
+                          ? 'border-primary-500 shadow-md' 
+                          : 'border-gray-200 hover:border-primary-300'
+                      }`}
+                      onClick={() => setSelectedLoad(load.id)}
+                    >
+                      <div className="border-b border-gray-100 bg-gray-50 px-4 py-2 flex justify-between items-center">
+                        <div className="font-medium">{load.vehicleYear} {load.vehicleMake} {load.vehicleModel}</div>
+                        <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                          load.status === 'In Transit' 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : load.status === 'Completed' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {load.status}
+                        </span>
+                      </div>
+                      <div className="p-4">
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">VIN</div>
+                            <div className="text-sm font-mono">{load.vin}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">Customer</div>
+                            <div className="text-sm">{load.customer}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start mb-3">
+                          <div className="mt-1 flex-shrink-0">
+                            <span className="flex h-4 w-4 items-center justify-center rounded-full border border-green-500 bg-white text-xs font-medium text-green-500">P</span>
+                          </div>
+                          <div className="ml-3">
+                            <div className="text-sm font-medium text-gray-900">Pickup</div>
+                            <div className="text-sm text-gray-600">{load.pickupLocation}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="ml-2 pl-2 border-l-2 border-dashed border-gray-300 h-6"></div>
+                        
+                        <div className="flex items-start">
+                          <div className="mt-1 flex-shrink-0">
+                            <span className="flex h-4 w-4 items-center justify-center rounded-full border border-red-500 bg-white text-xs font-medium text-red-500">D</span>
+                          </div>
+                          <div className="ml-3">
+                            <div className="text-sm font-medium text-gray-900">Dropoff</div>
+                            <div className="text-sm text-gray-600">{load.dropoffLocation}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-4 flex justify-between text-sm text-gray-500">
+                          <div>Assigned: {load.timeAssigned}</div>
+                          <div>ETA: {load.estimatedArrival}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {driver.loads.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="mx-auto h-12 w-12 text-gray-300 mb-3">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+                      </svg>
+                      <p>No active loads assigned to this driver</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
+            
+            {activeTab === 'documents' && (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold">Driver Documents</h2>
+                  <div>
+                    <Link 
+                      href={`/dashboard/drivers/edit/${driver.id}?tab=documents`}
+                      className="text-sm text-primary-600 hover:text-primary-700 flex items-center"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                      </svg>
+                      Upload New Document
+                    </Link>
+                  </div>
+                </div>
+                
+                {driver.documents.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="mx-auto h-12 w-12 text-gray-300 mb-3">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    <p>No documents found for this driver</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Document
+                          </th>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            ID Number
+                          </th>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Expiry Date
+                          </th>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {driver.documents.map((document) => {
+                          const expiryDate = document.expiryDate ? parseISO(document.expiryDate) : null;
+                          let status = 'valid';
+                          if (expiryDate) {
+                            const today = new Date();
+                            const thirtyDaysFromNow = addDays(today, 30);
+                            
+                            if (isBefore(expiryDate, today)) {
+                              status = 'expired';
+                            } else if (isBefore(expiryDate, thirtyDaysFromNow)) {
+                              status = 'expiringSoon';
+                            }
+                          }
+                          
+                          const statusClasses = status === 'expired'
+                            ? 'bg-red-100 text-red-800'
+                            : status === 'expiringSoon'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-green-100 text-green-800';
+                            
+                          return (
+                            <tr key={document.id}>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm font-medium text-gray-900">{document.title}</div>
+                                <div className="text-xs text-gray-500">{document.documentType}</div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900">{document.documentNumber || 'N/A'}</div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900">
+                                  {expiryDate ? format(expiryDate, 'MM/dd/yyyy') : 'N/A'}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClasses}`}>
+                                  {status === 'valid' ? 'Valid' : status === 'expiringSoon' ? 'Expiring Soon' : 'Expired'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div className="flex space-x-2">
+                                  <button
+                                    onClick={() => window.open(document.imageUri, '_blank')}
+                                    className="text-blue-600 hover:text-blue-900"
+                                  >
+                                    View
+                                  </button>
+                                  {status !== 'valid' && (
+                                    <button
+                                      onClick={() => {
+                                        // Send reminder logic would go here
+                                        alert('Reminder sent to driver about document expiration');
+                                      }}
+                                      className="text-indigo-600 hover:text-indigo-900"
+                                    >
+                                      Send Reminder
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>

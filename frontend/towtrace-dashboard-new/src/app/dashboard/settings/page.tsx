@@ -8,9 +8,12 @@ export default function SettingsPage() {
   const [notifications, setNotifications] = useState({
     email: true,
     push: true,
+    sms: false,
     weeklyReport: true,
     newJob: true,
     inspection: true,
+    documentExpiration: true,
+    driverArrival: true,
   });
   
   const [companyInfo, setCompanyInfo] = useState({
@@ -454,6 +457,25 @@ export default function SettingsPage() {
                       <p className="text-gray-500">Receive push notifications on your mobile device.</p>
                     </div>
                   </div>
+                  
+                  <div className="flex items-start">
+                    <div className="flex h-5 items-center">
+                      <input
+                        id="sms"
+                        name="sms"
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        checked={notifications.sms}
+                        onChange={() => handleNotificationChange('sms')}
+                      />
+                    </div>
+                    <div className="ml-3 text-sm">
+                      <label htmlFor="sms" className="font-medium text-gray-700">
+                        SMS Notifications
+                      </label>
+                      <p className="text-gray-500">Receive text messages for urgent notifications.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
               
@@ -514,6 +536,44 @@ export default function SettingsPage() {
                         Inspection Alerts
                       </label>
                       <p className="text-gray-500">Get notified about inspection results and issues.</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start">
+                    <div className="flex h-5 items-center">
+                      <input
+                        id="documentExpiration"
+                        name="documentExpiration"
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        checked={notifications.documentExpiration}
+                        onChange={() => handleNotificationChange('documentExpiration')}
+                      />
+                    </div>
+                    <div className="ml-3 text-sm">
+                      <label htmlFor="documentExpiration" className="font-medium text-gray-700">
+                        Document Expiration Alerts
+                      </label>
+                      <p className="text-gray-500">Be notified when driver documents are expiring (30, 60, 90 days).</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start">
+                    <div className="flex h-5 items-center">
+                      <input
+                        id="driverArrival"
+                        name="driverArrival"
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        checked={notifications.driverArrival}
+                        onChange={() => handleNotificationChange('driverArrival')}
+                      />
+                    </div>
+                    <div className="ml-3 text-sm">
+                      <label htmlFor="driverArrival" className="font-medium text-gray-700">
+                        Driver Arrival Notifications
+                      </label>
+                      <p className="text-gray-500">Get notified when drivers arrive at pickup or dropoff locations.</p>
                     </div>
                   </div>
                 </div>

@@ -157,3 +157,49 @@ CREATE TABLE api_keys (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Document storage for driver documents (Driver Wallet)
+CREATE TABLE driver_documents (
+  id UUID PRIMARY KEY,
+  driver_id UUID REFERENCES users(id) NOT NULL,
+  tenant_id UUID REFERENCES tenants(id) NOT NULL,
+  document_type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  document_number TEXT,
+  expiry_date TIMESTAMP,
+  requires_expiry BOOLEAN DEFAULT FALSE,
+  image_uri TEXT,
+  sync_status TEXT CHECK (sync_status IN ('synced', 'pending', 'failed')),
+  last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Document expiration notifications for tracking and alerts
+CREATE TABLE document_expiration_notifications (
+  id UUID PRIMARY KEY,
+  document_id UUID REFERENCES driver_documents(id) NOT NULL,
+  driver_id UUID REFERENCES users(id) NOT NULL,
+  tenant_id UUID REFERENCES tenants(id) NOT NULL,
+  notification_type TEXT CHECK (notification_type IN ('30day', '60day', '90day')),
+  notification_status TEXT CHECK (notification_status IN ('pending', 'sent', 'acknowledged')),
+  sent_at TIMESTAMP,
+  acknowledged_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- User notification preferences for how they want to receive notifications
+CREATE TABLE user_notification_preferences (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES users(id) NOT NULL,
+  tenant_id UUID REFERENCES tenants(id) NOT NULL,
+  email_notifications BOOLEAN DEFAULT TRUE,
+  push_notifications BOOLEAN DEFAULT TRUE,
+  sms_notifications BOOLEAN DEFAULT FALSE,
+  document_expiration_notifications BOOLEAN DEFAULT TRUE,
+  system_notifications BOOLEAN DEFAULT TRUE,
+  driver_arrival_notifications BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

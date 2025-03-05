@@ -1,9 +1,7 @@
 {
-  "/dashboard/drivers/edit/[id]/page": "app/dashboard/drivers/edit/[id]/page.js",
+  "/dashboard/settings/page": "app/dashboard/settings/page.js",
   "/dashboard/drivers/[id]/page": "app/dashboard/drivers/[id]/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/eld-logs/page": "app/dashboard/eld-logs/page.js",
-  "/dashboard/settings/quickbooks/page": "app/dashboard/settings/quickbooks/page.js",
   "/dashboard/overwatch/page": "app/dashboard/overwatch/page.js",
-  "/dashboard/settings/page": "app/dashboard/settings/page.js"
+  "/dashboard/settings/quickbooks/page": "app/dashboard/settings/quickbooks/page.js"
 }

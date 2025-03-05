@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/app/context/auth-context';
+import { useNotifications } from '@/app/context/notification-context';
 import UserAccountMenu from '@/components/UserAccountMenu';
+import NotificationMenu from '@/components/NotificationMenu';
 
 // Navigation items - base items for all users
 const getNavigationItems = (role: "admin" | "dispatcher" | "driver" | undefined) => {
@@ -13,6 +15,7 @@ const getNavigationItems = (role: "admin" | "dispatcher" | "driver" | undefined)
     { name: 'Vehicles', href: '/dashboard/vehicles' },
     { name: 'Drivers', href: '/dashboard/drivers' },
     { name: 'Jobs', href: '/dashboard/jobs' },
+    { name: 'Documents', href: '/dashboard/documents' },
     { name: 'Inspections', href: '/dashboard/inspections' },
     { name: 'Settings', href: '/dashboard/settings' },
   ];
@@ -37,6 +40,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { notifications, loadNotifications, markAsRead, markAllAsRead } = useNotifications();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Check authentication status
@@ -164,12 +168,13 @@ export default function DashboardLayout({
           
           {/* User Profile and Actions */}
           <div className="flex items-center">
-            {/* Notification bell */}
-            <button className="p-2 rounded-full text-gray-500 hover:text-primary-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-              </svg>
-            </button>
+            {/* Notification menu */}
+            <NotificationMenu 
+              notifications={notifications}
+              onMarkAllAsRead={markAllAsRead}
+              onMarkAsRead={markAsRead}
+              onFetchNotifications={loadNotifications}
+            />
             
             {/* User Profile Dropdown */}
             <div className="relative ml-3">
