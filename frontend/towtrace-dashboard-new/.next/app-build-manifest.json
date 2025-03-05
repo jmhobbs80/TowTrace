@@ -26,26 +26,6 @@
       "static/chunks/main-app.js",
       "static/chunks/app/dashboard/layout.js"
     ],
-    "/dashboard/profile/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/profile/page.js"
-    ],
-    "/dashboard/settings/users/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/settings/users/page.js"
-    ],
-    "/dashboard/settings/users/roles/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/settings/users/roles/page.js"
-    ],
-    "/dashboard/settings/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/settings/page.js"
-    ],
     "/dashboard/vehicles/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -61,20 +41,30 @@
       "static/chunks/main-app.js",
       "static/chunks/app/dashboard/jobs/page.js"
     ],
-    "/dashboard/jobs/new/page": [
+    "/dashboard/documents/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/jobs/new/page.js"
+      "static/chunks/app/dashboard/documents/page.js"
     ],
-    "/dashboard/jobs/scan/page": [
+    "/dashboard/inspections/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/jobs/scan/page.js"
+      "static/chunks/app/dashboard/inspections/page.js"
     ],
-    "/dashboard/vehicles/scan/page": [
+    "/dashboard/settings/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/vehicles/scan/page.js"
+      "static/chunks/app/dashboard/settings/page.js"
+    ],
+    "/dashboard/settings/users/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/settings/users/page.js"
+    ],
+    "/dashboard/settings/quickbooks/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/settings/quickbooks/page.js"
     ],
     "/dashboard/drivers/[id]/page": [
       "static/chunks/webpack.js",
@@ -85,31 +75,6 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/dashboard/drivers/edit/[id]/page.js"
-    ],
-    "/dashboard/documents/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/documents/page.js"
-    ],
-    "/dashboard/settings/quickbooks/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/settings/quickbooks/page.js"
-    ],
-    "/dashboard/inspections/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/inspections/page.js"
-    ],
-    "/dashboard/inspections/[id]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/inspections/[id]/page.js"
-    ],
-    "/dashboard/inspections/create/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/inspections/create/page.js"
     ]
   }
 }

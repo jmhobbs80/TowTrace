@@ -1,9 +1,10 @@
 {
-  "/dashboard/jobs/page": "app/dashboard/jobs/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
   "/dashboard/documents/page": "app/dashboard/documents/page.js",
-  "/dashboard/inspections/page": "app/dashboard/inspections/page.js",
-  "/dashboard/inspections/[id]/page": "app/dashboard/inspections/[id]/page.js",
+  "/dashboard/settings/users/page": "app/dashboard/settings/users/page.js",
+  "/dashboard/settings/page": "app/dashboard/settings/page.js",
+  "/dashboard/settings/quickbooks/page": "app/dashboard/settings/quickbooks/page.js",
+  "/dashboard/drivers/page": "app/dashboard/drivers/page.js",
   "/dashboard/drivers/edit/[id]/page": "app/dashboard/drivers/edit/[id]/page.js",
-  "/dashboard/drivers/[id]/page": "app/dashboard/drivers/[id]/page.js",
-  "/dashboard/inspections/create/page": "app/dashboard/inspections/create/page.js"
+  "/dashboard/drivers/[id]/page": "app/dashboard/drivers/[id]/page.js"
 }
