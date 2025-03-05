@@ -1,8 +1,10 @@
 {
-  "/dashboard/overwatch/page": "app/dashboard/overwatch/page.js",
-  "/dashboard/settings/page": "app/dashboard/settings/page.js",
+  "/page": "app/page.js",
+  "/login/page": "app/login/page.js",
   "/dashboard/page": "app/dashboard/page.js",
   "/dashboard/drivers/page": "app/dashboard/drivers/page.js",
+  "/dashboard/settings/users/page": "app/dashboard/settings/users/page.js",
   "/dashboard/drivers/edit/[id]/page": "app/dashboard/drivers/edit/[id]/page.js",
-  "/dashboard/eld-logs/page": "app/dashboard/eld-logs/page.js"
+  "/dashboard/drivers/[id]/page": "app/dashboard/drivers/[id]/page.js",
+  "/dashboard/settings/page": "app/dashboard/settings/page.js"
 }

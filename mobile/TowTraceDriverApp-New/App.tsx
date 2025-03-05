@@ -13,8 +13,10 @@ import VINScanner from "./screens/VINScanner";
 import JobTracker from "./screens/JobTracker";
 import Inspection from "./screens/Inspection";
 import EldDashboard from "./screens/EldDashboard";
+import DriverWallet from "./screens/DriverWallet";
 import SubscriptionSettings from "./screens/SubscriptionSettings";
 import SubscriptionButton from "./components/SubscriptionButton";
+import UserAccountMenu from "../components/UserAccountMenu";
 import { RootStackParamList, AuthContextType } from "./types";
 import { EldService } from "./services/EldService";
 import { SubscriptionService } from "./services/SubscriptionService";
@@ -211,10 +213,9 @@ export default function App() {
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                       <SubscriptionButton plan={subscription?.plan || 'basic'} compact={true} />
                       <View style={{ width: 10 }} />
-                      <Button
-                        onPress={logout}
-                        title="Logout"
-                        color="#fff"
+                      <UserAccountMenu 
+                        userRole="driver"
+                        userName="Driver User" // This should be replaced with actual user name from API
                       />
                     </View>
                   ),
@@ -226,11 +227,14 @@ export default function App() {
                 options={{ 
                   title: "Track Job Location",
                   headerRight: () => (
-                    <Button
-                      onPress={logout}
-                      title="Logout"
-                      color="#fff"
-                    />
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <SubscriptionButton plan={subscription?.plan || 'basic'} compact={true} />
+                      <View style={{ width: 10 }} />
+                      <UserAccountMenu 
+                        userRole="driver"
+                        userName="Driver User" // This should be replaced with actual user name from API
+                      />
+                    </View>
                   ),
                 }}
               />
@@ -240,11 +244,31 @@ export default function App() {
                 options={{ 
                   title: "Vehicle Inspection",
                   headerRight: () => (
-                    <Button
-                      onPress={logout}
-                      title="Logout"
-                      color="#fff"
-                    />
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <SubscriptionButton plan={subscription?.plan || 'basic'} compact={true} />
+                      <View style={{ width: 10 }} />
+                      <UserAccountMenu 
+                        userRole="driver"
+                        userName="Driver User" // This should be replaced with actual user name from API
+                      />
+                    </View>
+                  ),
+                }}
+              />
+              <Stack.Screen 
+                name="DriverWallet" 
+                component={DriverWallet} 
+                options={{ 
+                  title: "Driver Documents",
+                  headerRight: () => (
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <SubscriptionButton plan={subscription?.plan || 'basic'} compact={true} />
+                      <View style={{ width: 10 }} />
+                      <UserAccountMenu 
+                        userRole="driver"
+                        userName="Driver User" // This should be replaced with actual user name from API
+                      />
+                    </View>
                   ),
                 }}
               />
@@ -254,11 +278,14 @@ export default function App() {
                 options={{ 
                   title: "ELD Dashboard",
                   headerRight: () => (
-                    <Button
-                      onPress={logout}
-                      title="Logout"
-                      color="#fff"
-                    />
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <SubscriptionButton plan={subscription?.plan || 'basic'} compact={true} />
+                      <View style={{ width: 10 }} />
+                      <UserAccountMenu 
+                        userRole="driver"
+                        userName="Driver User" // This should be replaced with actual user name from API
+                      />
+                    </View>
                   ),
                 }}
               />
@@ -268,11 +295,14 @@ export default function App() {
                 options={{ 
                   title: "Subscription",
                   headerRight: () => (
-                    <Button
-                      onPress={logout}
-                      title="Logout"
-                      color="#fff"
-                    />
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <SubscriptionButton plan={subscription?.plan || 'basic'} compact={true} />
+                      <View style={{ width: 10 }} />
+                      <UserAccountMenu 
+                        userRole="driver"
+                        userName="Driver User" // This should be replaced with actual user name from API
+                      />
+                    </View>
                   ),
                 }}
               />
@@ -282,11 +312,14 @@ export default function App() {
                 options={{ 
                   title: "Fleet Tracker",
                   headerRight: () => (
-                    <Button
-                      onPress={logout}
-                      title="Logout"
-                      color="#fff"
-                    />
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <SubscriptionButton plan={subscription?.plan || 'basic'} compact={true} />
+                      <View style={{ width: 10 }} />
+                      <UserAccountMenu 
+                        userRole="driver"
+                        userName="Driver User" // This should be replaced with actual user name from API
+                      />
+                    </View>
                   ),
                 }}
               />
@@ -296,11 +329,14 @@ export default function App() {
                 options={{ 
                   title: "Job Assignment",
                   headerRight: () => (
-                    <Button
-                      onPress={logout}
-                      title="Logout"
-                      color="#fff"
-                    />
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <SubscriptionButton plan={subscription?.plan || 'basic'} compact={true} />
+                      <View style={{ width: 10 }} />
+                      <UserAccountMenu 
+                        userRole="driver"
+                        userName="Driver User" // This should be replaced with actual user name from API
+                      />
+                    </View>
                   ),
                 }}
               />

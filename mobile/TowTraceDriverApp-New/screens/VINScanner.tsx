@@ -408,6 +408,12 @@ const VINScanner: React.FC = () => {
         >
           <Text style={styles.navigationButtonText}>Vehicle Inspection</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.navigationButton, styles.documentButton]}
+          onPress={() => navigation.navigate('DriverWallet')}
+        >
+          <Text style={styles.navigationButtonText}>Driver Wallet</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -581,21 +587,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   navigationButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginTop: 16,
   },
   navigationButton: {
     backgroundColor: '#007AFF',
     borderRadius: 8,
     padding: 16,
-    flex: 0.48,
     alignItems: 'center',
+    marginBottom: 10,
   },
   navigationButtonText: {
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 16,
+  },
+  documentButton: {
+    backgroundColor: '#5856D6',
   },
 });
 

@@ -36,6 +36,9 @@ const JobTracker: React.FC = () => {
   const [offlineLocations, setOfflineLocations] = useState<TrackingLocation[]>([]);
   const [activeJobInfo, setActiveJobInfo] = useState<any>(null);
   const [locationWatchId, setLocationWatchId] = useState<number | null>(null);
+  const [showTraffic, setShowTraffic] = useState<boolean>(false);
+  const [showWeather, setShowWeather] = useState<boolean>(false);
+  const [subscription, setSubscription] = useState<string | null>(null);
 
   useEffect(() => {
     // Check network connectivity
@@ -53,6 +56,20 @@ const JobTracker: React.FC = () => {
     
     // Check for active jobs
     fetchActiveJob();
+    
+    // Get user subscription level
+    const getSubscription = async () => {
+      try {
+        const subscriptionData = await AsyncStorage.getItem('userSubscription');
+        if (subscriptionData) {
+          setSubscription(JSON.parse(subscriptionData).plan);
+        }
+      } catch (error) {
+        console.error('Error fetching subscription data:', error);
+      }
+    };
+    
+    getSubscription();
 
     // Cleanup function
     return () => {
@@ -189,9 +206,9 @@ const JobTracker: React.FC = () => {
       },
       { 
         enableHighAccuracy: true, 
-        distanceFilter: 10, // Update when moved 10 meters
-        interval: 5000, // Update every 5 seconds
-        fastestInterval: 2000 // Fastest update interval
+        distanceFilter: 5, // Update when moved 5 meters
+        interval: 1000, // Update every 1 second
+        fastestInterval: 500 // Fastest update interval (0.5 seconds)
       }
     );
     
@@ -290,6 +307,17 @@ const JobTracker: React.FC = () => {
             style={styles.map}
             provider={PROVIDER_GOOGLE}
             initialRegion={getInitialRegion()}
+            showsTraffic={showTraffic}
+            showsUserLocation={true}
+            showsMyLocationButton={true}
+            showsCompass={true}
+            showsScale={true}
+            showsBuildings={true}
+            showsIndoors={true}
+            toolbarEnabled={true}
+            loadingEnabled={true}
+            loadingIndicatorColor="#007AFF"
+            loadingBackgroundColor="rgba(255, 255, 255, 0.7)"
           >
             {currentLocation && (
               <Marker
@@ -335,6 +363,29 @@ const JobTracker: React.FC = () => {
               />
             )}
           </MapView>
+          
+          {/* Map Layer Controls - Only visible for Premium/Enterprise subscribers */}
+          {(subscription === 'premium' || subscription === 'enterprise') && (
+            <View style={styles.mapControls}>
+              <TouchableOpacity
+                style={[styles.mapControlButton, showTraffic && styles.mapControlActive]}
+                onPress={() => setShowTraffic(!showTraffic)}
+              >
+                <Text style={[styles.mapControlText, showTraffic && styles.mapControlTextActive]}>
+                  Traffic
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.mapControlButton, showWeather && styles.mapControlActive]}
+                onPress={() => setShowWeather(!showWeather)}
+              >
+                <Text style={[styles.mapControlText, showWeather && styles.mapControlTextActive]}>
+                  Weather
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
         
         <View style={styles.trackingButtonContainer}>
@@ -398,6 +449,12 @@ const JobTracker: React.FC = () => {
         >
           <Text style={styles.navigationButtonText}>Vehicle Inspection</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.navigationButton, styles.documentButton]}
+          onPress={() => navigation.navigate('DriverWallet' as never)}
+        >
+          <Text style={styles.navigationButtonText}>Driver Wallet</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -418,6 +475,39 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: '#000000',
     textAlign: 'center',
+  },
+  mapControls: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    flexDirection: 'column',
+    backgroundColor: 'transparent',
+  },
+  mapControlButton: {
+    backgroundColor: 'white',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  mapControlActive: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  mapControlText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#666666',
+  },
+  mapControlTextActive: {
+    color: '#FFFFFF',
   },
   loadingContainer: {
     alignItems: 'center',
@@ -531,21 +621,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   navigationButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginTop: 16,
   },
   navigationButton: {
     backgroundColor: '#007AFF',
     borderRadius: 8,
     padding: 16,
-    flex: 0.48,
     alignItems: 'center',
+    marginBottom: 10,
   },
   navigationButtonText: {
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 16,
+  },
+  documentButton: {
+    backgroundColor: '#5856D6',
+    flex: 1,
   },
 });
 

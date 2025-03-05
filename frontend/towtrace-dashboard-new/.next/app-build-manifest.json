@@ -31,35 +31,25 @@
       "static/chunks/main-app.js",
       "static/chunks/app/dashboard/drivers/page.js"
     ],
-    "/dashboard/overwatch/page": [
+    "/dashboard/settings/users/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/overwatch/page.js"
+      "static/chunks/app/dashboard/settings/users/page.js"
     ],
     "/dashboard/drivers/edit/[id]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/dashboard/drivers/edit/[id]/page.js"
     ],
-    "/dashboard/inspections/page": [
+    "/dashboard/drivers/[id]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/inspections/page.js"
-    ],
-    "/dashboard/inspections/[id]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/inspections/[id]/page.js"
+      "static/chunks/app/dashboard/drivers/[id]/page.js"
     ],
     "/dashboard/settings/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/dashboard/settings/page.js"
-    ],
-    "/dashboard/eld-logs/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/eld-logs/page.js"
     ]
   }
 }

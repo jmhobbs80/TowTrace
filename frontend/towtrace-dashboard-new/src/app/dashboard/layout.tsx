@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/app/context/auth-context';
+import UserAccountMenu from '@/components/UserAccountMenu';
 
 // Navigation items - base items for all users
 const getNavigationItems = (role: "admin" | "dispatcher" | "driver" | undefined) => {
@@ -37,12 +38,6 @@ export default function DashboardLayout({
   const router = useRouter();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  
-  // Handle mouse leave for user menu
-  const handleMouseLeave = () => {
-    setUserMenuOpen(false);
-  };
   
   // Check authentication status
   useEffect(() => {
@@ -177,65 +172,14 @@ export default function DashboardLayout({
             </button>
             
             {/* User Profile Dropdown */}
-            <div className="relative ml-3" onMouseLeave={handleMouseLeave}>
-              <button
-                type="button"
-                className="flex items-center rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                onMouseEnter={() => setUserMenuOpen(true)}
-              >
-                {user?.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="h-8 w-8 rounded-full border border-gray-200"
-                  />
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-primary-100 border border-gray-200 flex items-center justify-center">
-                    <span className="text-primary-700 font-medium">
-                      {user?.name?.charAt(0) || 'A'}
-                    </span>
-                  </div>
-                )}
-                <span className="hidden md:block ml-2 text-sm font-medium text-gray-700 truncate max-w-[100px]">
-                  {user?.name || 'User'}
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 ml-1 text-gray-400">
-                  <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-                </svg>
-              </button>
-              
-              {/* Dropdown Menu */}
-              {userMenuOpen && (
-                <div className="absolute right-0 z-40 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none animate-fade-in">
-                  <div className="border-b border-gray-100 px-4 py-2">
-                    <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                    <p className="text-xs text-gray-500">{user?.email}</p>
-                  </div>
-                  <Link href="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                    Your Profile
-                  </Link>
-                  <Link href="/dashboard/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                    Settings
-                  </Link>
-                  {user?.role === 'admin' && (
-                    <>
-                      <Link href="/dashboard/settings/users" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                        Manage Users
-                      </Link>
-                      <Link href="/dashboard/eld-logs" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                        View ELD Logs
-                      </Link>
-                    </>
-                  )}
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    Sign out
-                  </button>
-                </div>
-              )}
+            <div className="relative ml-3">
+              <UserAccountMenu
+                userRole={user?.role || 'user'}
+                userName={user?.name || 'User'}
+                userEmail={user?.email || 'user@example.com'}
+                userAvatar={user?.avatar}
+                onLogout={handleLogout}
+              />
             </div>
           </div>
         </div>

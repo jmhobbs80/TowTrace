@@ -6,6 +6,7 @@ export type RootStackParamList = {
   JobAssignment: undefined;
   EldDashboard: undefined;
   SubscriptionSettings: undefined;
+  DriverWallet: undefined;
   Login: undefined;
 };
 
