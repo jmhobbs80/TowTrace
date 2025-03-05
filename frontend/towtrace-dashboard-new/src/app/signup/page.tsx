@@ -3,7 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/app/context/auth-context';
+import { useAuth, UserRole } from '@/app/context/auth-context';
 
 export default function SignupPage() {
   const [name, setName] = useState('');
@@ -43,7 +43,7 @@ export default function SignupPage() {
         email,
         phoneNumber,
         company,
-        role: role as 'admin' | 'dispatcher' | 'driver',
+        role: role as UserRole,
       }, password);
       
       // Redirect to dashboard on success

@@ -3,11 +3,13 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 // Expanded User type to include profile information
+export type UserRole = 'admin' | 'dispatcher' | 'driver' | 'manager' | 'system_admin' | 'client_admin';
+
 export type User = {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'dispatcher' | 'driver';
+  role: UserRole;
   status?: 'On Duty' | 'Off Duty' | 'On Break';
   gpsEnabled?: boolean;
   activeLoads?: number;
