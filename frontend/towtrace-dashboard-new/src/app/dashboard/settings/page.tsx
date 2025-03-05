@@ -39,6 +39,7 @@ export default function SettingsPage() {
     { id: 'users', name: 'Users' },
     { id: 'quickbooks', name: 'QuickBooks' },
     { id: 'general', name: 'General' },
+    { id: 'feedback', name: 'Feedback & Support' },
   ];
   
   const handleNotificationChange = (key: string) => {
@@ -360,46 +361,66 @@ export default function SettingsPage() {
           </div>
           
           <div>
-            <h3 className="text-lg font-medium leading-6 text-gray-900">Export Data</h3>
+            <h3 className="text-lg font-medium leading-6 text-gray-900">Analytics Settings</h3>
             <p className="mt-1 text-sm text-gray-500">
-              Download your data in various formats.
+              Configure your analytics preferences and data usage.
             </p>
           </div>
           
           <div className="bg-white shadow-sm rounded-md p-6">
-            <div className="space-y-4">
-              <div>
-                <button
-                  type="button"
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                >
-                  <svg className="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                  Export as CSV
-                </button>
+            <div className="flex flex-col space-y-4">
+              <div className="flex items-start">
+                <div className="flex h-5 items-center">
+                  <input
+                    id="usage-data"
+                    name="usage-data"
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    defaultChecked={true}
+                  />
+                </div>
+                <div className="ml-3 text-sm">
+                  <label htmlFor="usage-data" className="font-medium text-gray-700">Share anonymous usage data</label>
+                  <p className="text-gray-500">Help us improve TowTrace by sharing anonymous usage statistics.</p>
+                </div>
               </div>
-              <div>
-                <button
-                  type="button"
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                >
-                  <svg className="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                  Export as Excel
-                </button>
+              
+              <div className="flex items-start">
+                <div className="flex h-5 items-center">
+                  <input
+                    id="performance-tracking"
+                    name="performance-tracking"
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    defaultChecked={true}
+                  />
+                </div>
+                <div className="ml-3 text-sm">
+                  <label htmlFor="performance-tracking" className="font-medium text-gray-700">Performance tracking</label>
+                  <p className="text-gray-500">Track response times and system performance to optimize your experience.</p>
+                </div>
               </div>
-              <div>
-                <button
-                  type="button"
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                >
-                  <svg className="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                  Export as PDF
-                </button>
+              
+              <div className="flex items-start">
+                <div className="flex h-5 items-center">
+                  <input
+                    id="personalized-analytics"
+                    name="personalized-analytics"
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    defaultChecked={true}
+                  />
+                </div>
+                <div className="ml-3 text-sm">
+                  <label htmlFor="personalized-analytics" className="font-medium text-gray-700">Personalized analytics</label>
+                  <p className="text-gray-500">Receive insights and recommendations based on your usage patterns.</p>
+                </div>
+              </div>
+              
+              <div className="border-t border-gray-200 pt-4 mt-2">
+                <p className="text-sm text-gray-500">
+                  <span className="font-medium">Note:</span> Data exports have been moved to the reporting section for Premium and Enterprise subscribers.
+                </p>
               </div>
             </div>
           </div>
@@ -592,6 +613,99 @@ export default function SettingsPage() {
         </div>
       )}
       
+      {activeTab === 'feedback' && (
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-medium leading-6 text-gray-900">Feedback & Support</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Submit feature suggestions or report app issues to our support team.
+            </p>
+          </div>
+          
+          <div className="bg-white shadow-sm rounded-md p-6">
+            <form className="space-y-6">
+              <div>
+                <label htmlFor="feedback-type" className="block text-sm font-medium text-gray-700">
+                  Feedback Type
+                </label>
+                <select
+                  id="feedback-type"
+                  name="feedback-type"
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+                >
+                  <option>Feature Suggestion</option>
+                  <option>Bug Report</option>
+                  <option>General Feedback</option>
+                  <option>Service Issue</option>
+                  <option>Account Problem</option>
+                </select>
+              </div>
+              
+              <div>
+                <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
+                  Subject
+                </label>
+                <input
+                  type="text"
+                  name="subject"
+                  id="subject"
+                  className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                  placeholder="Brief summary of your feedback or issue"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="message" className="block text-sm font-medium text-gray-700">
+                  Message
+                </label>
+                <textarea
+                  id="message"
+                  name="message"
+                  rows={5}
+                  className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                  placeholder="Please provide details about your suggestion or issue..."
+                ></textarea>
+                <p className="mt-1 text-sm text-gray-500">
+                  Your feedback will be categorized using AI for faster response and sent to support@towtrace.com.
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Attachments (Optional)
+                </label>
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                  <div className="space-y-1 text-center">
+                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                      <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <div className="flex text-sm text-gray-600">
+                      <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500">
+                        <span>Upload files</span>
+                        <input id="file-upload" name="file-upload" type="file" className="sr-only" multiple />
+                      </label>
+                      <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      PNG, JPG, GIF, PDF up to 10MB
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                >
+                  Submit Feedback
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      
       {activeTab === 'billing' && (
         <div className="space-y-6">
           <div>
@@ -622,6 +736,12 @@ export default function SettingsPage() {
                     className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                   >
                     Change Plan
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-md border border-transparent bg-primary-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                  >
+                    Upgrade/Downgrade Features
                   </button>
                   <button
                     type="button"

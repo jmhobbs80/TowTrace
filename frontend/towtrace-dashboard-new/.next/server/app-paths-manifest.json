@@ -1,5 +1,9 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/jobs/new/page": "app/dashboard/jobs/new/page.js"
+  "/dashboard/jobs/new/page": "app/dashboard/jobs/new/page.js",
+  "/dashboard/profile/page": "app/dashboard/profile/page.js",
+  "/dashboard/drivers/page": "app/dashboard/drivers/page.js",
+  "/dashboard/drivers/[id]/page": "app/dashboard/drivers/[id]/page.js",
+  "/dashboard/inspections/page": "app/dashboard/inspections/page.js",
+  "/dashboard/inspections/create/page": "app/dashboard/inspections/create/page.js"
 }
