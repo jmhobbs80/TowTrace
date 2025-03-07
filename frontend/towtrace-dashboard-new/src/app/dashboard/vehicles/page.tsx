@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import SortableTable, { ColumnDef } from '@/components/SortableTable';
 
 export default function VehiclesPage() {
   const [selectedVehicle, setSelectedVehicle] = useState(null);
@@ -107,6 +108,8 @@ export default function VehiclesPage() {
       status: "Active", 
       driver: "John Smith", 
       driverId: 1,
+      length: 20,
+      capacity: 4,
       lastUpdated: "2 hours ago",
       currentLoad: {
         id: 101,
@@ -327,12 +330,12 @@ export default function VehiclesPage() {
     <>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Truck Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Fleet Management</h1>
           <p className="text-gray-600">Track and manage your fleet</p>
         </div>
         <div className="flex space-x-3">
           {/* VIN Scan button removed as requested */}
-          <Link href="/dashboard/vehicles/new" className="btn btn-primary flex items-center">
+          <Link href="/dashboard/vehicles/create" className="btn btn-primary flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mr-1">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
@@ -374,97 +377,110 @@ export default function VehiclesPage() {
             </select>
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">ID</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">VIN</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Make/Model</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Year</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Status</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Assigned Driver</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Last Updated</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredVehicles.length > 0 ? (
-                filteredVehicles.map(vehicle => (
-                <tr key={vehicle.id} className="hover:bg-gray-50">
-                  <td className="py-3 px-4">{vehicle.id}</td>
-                  <td className="py-3 px-4 font-medium">{vehicle.vin}</td>
-                  <td className="py-3 px-4">{vehicle.make} {vehicle.model}</td>
-                  <td className="py-3 px-4">{vehicle.year}</td>
-                  <td className="py-3 px-4">
-                    <span className={`inline-block px-2 py-1 text-xs rounded-full ${
-                      vehicle.status === 'Active' 
-                        ? 'bg-green-100 text-green-800' 
-                        : vehicle.status === 'In Service' 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : vehicle.status === 'Maintenance'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {vehicle.status}
+        <SortableTable
+          data={filteredVehicles}
+          columns={[
+            {
+              id: 'id',
+              header: 'ID',
+              accessorKey: 'id',
+            },
+            {
+              id: 'vin',
+              header: 'VIN',
+              accessorKey: 'vin',
+              cell: ({ row }) => (
+                <span className="font-medium">{row.vin}</span>
+              ),
+            },
+            {
+              id: 'makeModel',
+              header: 'Make/Model',
+              cell: ({ row }) => (
+                <span>{row.make} {row.model}</span>
+              ),
+            },
+            {
+              id: 'year',
+              header: 'Year',
+              accessorKey: 'year',
+            },
+            {
+              id: 'status',
+              header: 'Status',
+              accessorKey: 'status',
+              cell: ({ row }) => (
+                <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                  row.status === 'Active' 
+                    ? 'bg-green-100 text-green-800' 
+                    : row.status === 'In Service' 
+                    ? 'bg-blue-100 text-blue-800' 
+                    : row.status === 'Maintenance'
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {row.status}
+                </span>
+              ),
+            },
+            {
+              id: 'driver',
+              header: 'Assigned Driver',
+              accessorKey: 'driver',
+            },
+            {
+              id: 'lastUpdated',
+              header: 'Last Updated',
+              accessorKey: 'lastUpdated',
+              cell: ({ row }) => (
+                <span className="text-gray-500">{row.lastUpdated}</span>
+              ),
+            },
+            {
+              id: 'actions',
+              header: 'Actions',
+              sortable: false,
+              cell: ({ row }) => (
+                <div className="flex space-x-2">
+                  <button 
+                    className="text-gray-600 hover:text-primary-600"
+                    onClick={() => handleViewVehicle(row)}
+                    title="View vehicle details"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </button>
+                  <button 
+                    className="text-gray-600 hover:text-primary-600"
+                    onClick={() => handleEditVehicle(row)}
+                    title="Edit vehicle details"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                    </svg>
+                  </button>
+                  {row.currentLoad && (
+                    <span className="bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3 mr-1">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+                      </svg>
+                      {row.currentLoad.vehicles.length}
                     </span>
-                  </td>
-                  <td className="py-3 px-4">{vehicle.driver}</td>
-                  <td className="py-3 px-4 text-gray-500">{vehicle.lastUpdated}</td>
-                  <td className="py-3 px-4">
-                    <div className="flex space-x-2">
-                      <button 
-                        className="text-gray-600 hover:text-primary-600"
-                        onClick={() => handleViewVehicle(vehicle)}
-                        title="View vehicle details"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                      </button>
-                      <button 
-                        className="text-gray-600 hover:text-primary-600"
-                        onClick={() => handleEditVehicle(vehicle)}
-                        title="Edit vehicle details"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                        </svg>
-                      </button>
-                      {vehicle.currentLoad && (
-                        <span className="bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3 mr-1">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-                          </svg>
-                          {vehicle.currentLoad.vehicles.length}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              )))
-              : (
-                <tr>
-                  <td colSpan={8} className="py-6 text-center text-gray-500">
-                    No vehicles found matching your criteria.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                  )}
+                </div>
+              ),
+            },
+          ]}
+          defaultSortColumn="id"
+          defaultSortDirection="asc"
+          storageKey="fleet-management-table"
+          emptyMessage="No vehicles found matching your criteria."
+        />
         <div className="p-4 border-t border-gray-100 flex justify-between items-center">
           <div className="text-sm text-gray-600">
-            Showing <span className="font-medium">1</span> to <span className="font-medium">6</span> of <span className="font-medium">6</span> vehicles
-          </div>
-          <div className="flex space-x-1">
-            <button className="px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-              Previous
-            </button>
-            <button className="px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-              Next
-            </button>
+            Showing all <span className="font-medium">{filteredVehicles.length}</span> vehicles
           </div>
         </div>
       </div>
@@ -850,6 +866,39 @@ export default function VehiclesPage() {
                       value={selectedVehicle.year}
                       onChange={(e) => setSelectedVehicle({...selectedVehicle, year: parseInt(e.target.value)})}
                     />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label htmlFor="length" className="block text-sm font-medium text-gray-700 mb-1">
+                        Truck Length (ft)
+                      </label>
+                      <input 
+                        type="number"
+                        id="length"
+                        min="1"
+                        max="100"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        value={selectedVehicle.length || ''}
+                        onChange={(e) => setSelectedVehicle({...selectedVehicle, length: parseInt(e.target.value)})}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="capacity" className="block text-sm font-medium text-gray-700 mb-1">
+                        Max Vehicle Capacity
+                      </label>
+                      <select
+                        id="capacity"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        value={selectedVehicle.capacity || '1'}
+                        onChange={(e) => setSelectedVehicle({...selectedVehicle, capacity: parseInt(e.target.value)})}
+                      >
+                        {[...Array(20)].map((_, i) => (
+                          <option key={i + 1} value={i + 1}>{i + 1}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                   
                   <div>

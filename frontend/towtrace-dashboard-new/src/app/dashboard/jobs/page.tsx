@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import SortableTable, { ColumnDef } from '@/components/SortableTable';
 
 export default function JobsPage() {
   const searchParams = useSearchParams();
@@ -116,85 +117,112 @@ export default function JobsPage() {
           </div>
         </div>
         
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">ID</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Client</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Pickup</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Dropoff</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Driver/Vehicle</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Status</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Created</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredJobs.length > 0 ? (
-                filteredJobs.map(job => (
-                  <tr key={job.id} className="hover:bg-gray-50">
-                    <td className="py-3 px-4 font-medium">#{job.id}</td>
-                    <td className="py-3 px-4">
-                      <div>{job.client}</div>
-                      <div className="text-xs text-gray-500">{job.phone}</div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="truncate max-w-[200px]">{job.pickupLocation}</div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="truncate max-w-[200px]">{job.dropoffLocation}</div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div>{job.driver}</div>
-                      <div className="text-xs text-gray-500">{job.vehicle}</div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${
-                        job.status === 'In Progress' 
-                          ? 'bg-blue-100 text-blue-800' 
-                          : job.status === 'Scheduled' 
-                          ? 'bg-purple-100 text-purple-800' 
-                          : job.status === 'Pending'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : job.status === 'Completed'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {job.status}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-gray-500">
-                      <div>{job.createdAt}</div>
-                      <div className="text-xs">ETA: {job.eta}</div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex space-x-2">
-                        <Link href={`/dashboard/jobs/${job.id}`} className="text-gray-600 hover:text-primary-600">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                        </Link>
-                        <Link href={`/dashboard/jobs/${job.id}/edit`} className="text-gray-600 hover:text-primary-600">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                          </svg>
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={8} className="py-6 text-center text-gray-500">
-                    No jobs found matching your criteria.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <SortableTable
+          data={filteredJobs}
+          columns={[
+            {
+              id: 'id',
+              header: 'ID',
+              accessorKey: 'id',
+              cell: ({ row }) => (
+                <span className="font-medium">#{row.id}</span>
+              ),
+            },
+            {
+              id: 'client',
+              header: 'Client',
+              accessorKey: 'client',
+              cell: ({ row }) => (
+                <div>
+                  <div>{row.client}</div>
+                  <div className="text-xs text-gray-500">{row.phone}</div>
+                </div>
+              ),
+            },
+            {
+              id: 'pickup',
+              header: 'Pickup',
+              accessorKey: 'pickupLocation',
+              cell: ({ row }) => (
+                <div className="truncate max-w-[200px]">{row.pickupLocation}</div>
+              ),
+            },
+            {
+              id: 'dropoff',
+              header: 'Dropoff',
+              accessorKey: 'dropoffLocation',
+              cell: ({ row }) => (
+                <div className="truncate max-w-[200px]">{row.dropoffLocation}</div>
+              ),
+            },
+            {
+              id: 'driver',
+              header: 'Driver/Vehicle',
+              accessorKey: 'driver',
+              cell: ({ row }) => (
+                <div>
+                  <div>{row.driver}</div>
+                  <div className="text-xs text-gray-500">{row.vehicle}</div>
+                </div>
+              ),
+            },
+            {
+              id: 'status',
+              header: 'Status',
+              accessorKey: 'status',
+              cell: ({ row }) => (
+                <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                  row.status === 'In Progress' 
+                    ? 'bg-blue-100 text-blue-800' 
+                    : row.status === 'Scheduled' 
+                    ? 'bg-purple-100 text-purple-800' 
+                    : row.status === 'Pending'
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : row.status === 'Completed'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {row.status}
+                </span>
+              ),
+            },
+            {
+              id: 'created',
+              header: 'Created',
+              accessorKey: 'createdAt',
+              cell: ({ row }) => (
+                <div className="text-gray-500">
+                  <div>{row.createdAt}</div>
+                  <div className="text-xs">ETA: {row.eta}</div>
+                </div>
+              ),
+            },
+            {
+              id: 'actions',
+              header: 'Actions',
+              sortable: false,
+              cell: ({ row }) => (
+                <div className="flex space-x-2">
+                  <Link href={`/dashboard/jobs/${row.id}`} className="text-gray-600 hover:text-primary-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </Link>
+                  <Link href={`/dashboard/jobs/${row.id}/edit`} className="text-gray-600 hover:text-primary-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                    </svg>
+                  </Link>
+                </div>
+              ),
+            },
+          ]}
+          defaultSortColumn="id"
+          defaultSortDirection="asc"
+          storageKey="jobs-table"
+          emptyMessage="No jobs found matching your criteria."
+        />
         
         <div className="p-4 border-t border-gray-100 flex justify-between items-center">
           <div className="text-sm text-gray-600">

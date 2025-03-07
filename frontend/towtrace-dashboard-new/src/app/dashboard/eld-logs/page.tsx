@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import SortableTable, { ColumnDef } from '@/components/SortableTable';
 
 interface Driver {
   id: string;
@@ -379,102 +380,144 @@ export default function EldLogsPage() {
       </div>
       
       {/* Logs table */}
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        <ul className="divide-y divide-gray-200">
-          {isLoading ? (
-            <div className="px-6 py-16 flex justify-center">
-              <div className="flex flex-col items-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
-                <span className="mt-4 text-gray-500">Loading ELD logs...</span>
-              </div>
+      <div className="bg-white shadow overflow-hidden sm:rounded-md p-4">
+        {isLoading ? (
+          <div className="px-6 py-16 flex justify-center">
+            <div className="flex flex-col items-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+              <span className="mt-4 text-gray-500">Loading ELD logs...</span>
             </div>
-          ) : filteredLogs.length === 0 ? (
-            <div className="px-6 py-16 flex justify-center">
-              <div className="text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No logs found</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Try adjusting your filters to see more results
-                </p>
-              </div>
-            </div>
-          ) : (
-            filteredLogs.map((log) => (
-              <li key={log.id} onClick={() => handleLogClick(log.id)} className="cursor-pointer">
-                <div className={`block hover:bg-gray-50 ${selectedLogId === log.id ? 'bg-gray-50' : ''}`}>
-                  <div className="px-4 py-4 sm:px-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <p className="text-sm font-medium text-primary-600 truncate">{log.driverName}</p>
-                        <span className={`mx-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(log.status)}`}>
-                          {getStatusText(log.status)}
-                        </span>
-                      </div>
-                      <div className="ml-2 flex-shrink-0 flex">
-                        <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                          {log.duration > 0 ? formatDuration(log.duration) : 'Active'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-2 sm:flex sm:justify-between">
-                      <div className="sm:flex">
-                        <p className="flex items-center text-sm text-gray-500">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          {formatDate(log.startTime)}
-                          {log.endTime ? ` - ${formatDate(log.endTime)}` : ' (Current)'}
-                        </p>
-                        <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          {log.vehicle?.name || 'No vehicle assigned'}
-                        </p>
-                      </div>
+          </div>
+        ) : (
+          <SortableTable
+            data={filteredLogs}
+            columns={[
+              {
+                id: 'driver',
+                header: 'Driver',
+                accessorKey: 'driverName',
+                cell: ({ row }) => (
+                  <div className="text-sm font-medium text-primary-600">{row.driverName}</div>
+                ),
+              },
+              {
+                id: 'status',
+                header: 'Status',
+                accessorKey: 'status',
+                cell: ({ row }) => (
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(row.status)}`}>
+                    {getStatusText(row.status)}
+                  </span>
+                ),
+              },
+              {
+                id: 'timeFrame',
+                header: 'Time Frame',
+                accessorKey: 'startTime',
+                cell: ({ row }) => (
+                  <div className="flex items-center text-sm text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>
+                      {formatDate(row.startTime)}
+                      {row.endTime ? ` - ${formatDate(row.endTime)}` : ' (Current)'}
+                    </span>
+                  </div>
+                ),
+              },
+              {
+                id: 'duration',
+                header: 'Duration',
+                accessorKey: 'duration',
+                cell: ({ row }) => (
+                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                    {row.duration > 0 ? formatDuration(row.duration) : 'Active'}
+                  </span>
+                ),
+              },
+              {
+                id: 'vehicle',
+                header: 'Vehicle',
+                cell: ({ row }) => (
+                  <div className="flex items-center text-sm text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {row.vehicle?.name || 'No vehicle assigned'}
+                  </div>
+                ),
+              },
+              {
+                id: 'location',
+                header: 'Location',
+                cell: ({ row }) => (
+                  <div className="text-sm text-gray-500 truncate max-w-[200px]">
+                    {row.location.address || 'Unknown location'}
+                  </div>
+                ),
+              },
+              {
+                id: 'details',
+                header: 'Details',
+                sortable: false,
+                cell: ({ row }) => (
+                  <button 
+                    onClick={() => handleLogClick(row.id)}
+                    className="text-primary-600 hover:text-primary-900"
+                  >
+                    {selectedLogId === row.id ? 'Hide Details' : 'View Details'}
+                  </button>
+                ),
+              },
+            ]}
+            defaultSortColumn="startTime"
+            defaultSortDirection="desc"
+            storageKey="eld-logs-table"
+            emptyMessage="No logs found matching your criteria. Try adjusting your filters to see more results."
+          />
+        )}
+        
+        {/* Show expanded details for selected log */}
+        {selectedLogId && (
+          <div className="mt-4 border-t border-gray-200 pt-4">
+            {filteredLogs
+              .filter(log => log.id === selectedLogId)
+              .map(log => (
+                <div key={log.id} className="bg-gray-50 p-4 rounded-md">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Log Details</h3>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Location</h4>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {log.location.address || 'Unknown location'}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        {log.location.latitude.toFixed(4)}, {log.location.longitude.toFixed(4)}
+                      </p>
                     </div>
                     
-                    {/* Expanded details */}
-                    {selectedLogId === log.id && (
-                      <div className="mt-4 border-t border-gray-200 pt-4">
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                          <div>
-                            <h4 className="text-sm font-medium text-gray-500">Location</h4>
-                            <p className="mt-1 text-sm text-gray-900">
-                              {log.location.address || 'Unknown location'}
-                            </p>
-                            <p className="mt-1 text-xs text-gray-500">
-                              {log.location.latitude.toFixed(4)}, {log.location.longitude.toFixed(4)}
-                            </p>
-                          </div>
-                          
-                          {log.vehicle && (
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-500">Vehicle</h4>
-                              <p className="mt-1 text-sm text-gray-900">{log.vehicle.name}</p>
-                              {log.vehicle.vin && (
-                                <p className="mt-1 text-xs text-gray-500">VIN: {log.vehicle.vin}</p>
-                              )}
-                            </div>
-                          )}
-                          
-                          {log.notes && (
-                            <div className="sm:col-span-2">
-                              <h4 className="text-sm font-medium text-gray-500">Notes</h4>
-                              <p className="mt-1 text-sm text-gray-900">{log.notes}</p>
-                            </div>
-                          )}
-                        </div>
+                    {log.vehicle && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-500">Vehicle</h4>
+                        <p className="mt-1 text-sm text-gray-900">{log.vehicle.name}</p>
+                        {log.vehicle.vin && (
+                          <p className="mt-1 text-xs text-gray-500">VIN: {log.vehicle.vin}</p>
+                        )}
+                      </div>
+                    )}
+                    
+                    {log.notes && (
+                      <div className="sm:col-span-2">
+                        <h4 className="text-sm font-medium text-gray-500">Notes</h4>
+                        <p className="mt-1 text-sm text-gray-900">{log.notes}</p>
                       </div>
                     )}
                   </div>
                 </div>
-              </li>
-            ))
-          )}
-        </ul>
+              ))}
+          </div>
+        )}
       </div>
     </div>
   );

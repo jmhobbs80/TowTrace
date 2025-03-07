@@ -12,7 +12,7 @@ import NotificationMenu from '@/components/NotificationMenu';
 const getNavigationItems = (role: "admin" | "dispatcher" | "driver" | undefined) => {
   const baseItems = [
     { name: 'Overview', href: '/dashboard' },
-    { name: 'Vehicles', href: '/dashboard/vehicles' },
+    { name: 'Fleet', href: '/dashboard/vehicles' },
     { name: 'Drivers', href: '/dashboard/drivers' },
     { name: 'Jobs', href: '/dashboard/jobs' },
     { name: 'Documents', href: '/dashboard/documents' },

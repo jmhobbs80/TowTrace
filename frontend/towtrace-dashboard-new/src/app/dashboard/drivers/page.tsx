@@ -1,8 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import SortableTable, { ColumnDef } from '@/components/SortableTable';
 
 export default function DriversPage() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [filteredDrivers, setFilteredDrivers] = useState([]);
+  
   // Sample drivers data with GPS coordinates and general location
   const drivers = [
     { 
@@ -77,6 +83,33 @@ export default function DriversPage() {
     },
   ];
   
+  // Initialize filteredDrivers with all drivers
+  useEffect(() => {
+    setFilteredDrivers(drivers);
+  }, []);
+
+  // Filter drivers based on search term and status
+  useEffect(() => {
+    const filtered = drivers.filter(driver => {
+      // Apply status filter if not 'all'
+      if (statusFilter !== 'all' && driver.status !== statusFilter) {
+        return false;
+      }
+      
+      // Apply search filter if search term exists
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        return driver.name.toLowerCase().includes(term) ||
+               driver.email.toLowerCase().includes(term) ||
+               driver.phone.toLowerCase().includes(term) || 
+               driver.id.toString().includes(term);
+      }
+      
+      return true;
+    });
+    
+    setFilteredDrivers(filtered);
+  }, [searchTerm, statusFilter]);
   return (
     <>
       <div className="flex justify-between items-center mb-6">
@@ -103,6 +136,8 @@ export default function DriversPage() {
                 <input 
                   type="text" 
                   placeholder="Search drivers..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
                 />
                 <div className="absolute left-3 top-2.5 text-gray-400">
@@ -112,89 +147,124 @@ export default function DriversPage() {
                 </div>
               </div>
             </div>
-            <select className="border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            <select 
+              className="border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
               <option value="all">All Status</option>
-              <option value="on-duty">On Duty</option>
-              <option value="off-duty">Off Duty</option>
-              <option value="on-break">On Break</option>
+              <option value="On Duty">On Duty</option>
+              <option value="Off Duty">Off Duty</option>
+              <option value="On Break">On Break</option>
             </select>
           </div>
         </div>
         
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">ID</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Name</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Contact</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Status</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Location</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Assigned Vehicle</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Last Update</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {drivers.map(driver => (
-                <tr key={driver.id} className="hover:bg-gray-50">
-                  <td className="py-3 px-4">{driver.id}</td>
-                  <td className="py-3 px-4 font-medium">{driver.name}</td>
-                  <td className="py-3 px-4">
-                    <div>{driver.phone}</div>
-                    <div className="text-xs text-gray-500">{driver.email}</div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`inline-block px-2 py-1 text-xs rounded-full ${
-                      driver.status === 'On Duty' 
-                        ? 'bg-green-100 text-green-800' 
-                        : driver.status === 'Off Duty' 
-                        ? 'bg-gray-100 text-gray-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {driver.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center space-x-1">
-                      {driver.status !== 'Off Duty' && driver.batteryFriendly && (
-                        <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Battery-friendly GPS active"></span>
-                      )}
-                      <span>{driver.generalLocation}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">{driver.assignedVehicle}</td>
-                  <td className="py-3 px-4 text-gray-500">{driver.lastUpdate}</td>
-                  <td className="py-3 px-4">
-                    <div className="flex space-x-2">
-                      <Link href={`/dashboard/drivers/${driver.id}`} className="text-gray-600 hover:text-primary-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <SortableTable
+          data={filteredDrivers}
+          columns={[
+            {
+              id: 'id',
+              header: 'ID',
+              accessorKey: 'id',
+            },
+            {
+              id: 'name',
+              header: 'Name',
+              accessorKey: 'name',
+              cell: ({ row }) => (
+                <span className="font-medium">{row.name}</span>
+              ),
+            },
+            {
+              id: 'contact',
+              header: 'Contact',
+              accessorKey: 'phone',
+              cell: ({ row }) => (
+                <div>
+                  <div>{row.phone}</div>
+                  <div className="text-xs text-gray-500">{row.email}</div>
+                </div>
+              ),
+            },
+            {
+              id: 'status',
+              header: 'Status',
+              accessorKey: 'status',
+              cell: ({ row }) => (
+                <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                  row.status === 'On Duty' 
+                    ? 'bg-green-100 text-green-800' 
+                    : row.status === 'Off Duty' 
+                    ? 'bg-gray-100 text-gray-800' 
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {row.status}
+                </span>
+              ),
+            },
+            {
+              id: 'location',
+              header: 'Location',
+              accessorKey: 'generalLocation',
+              cell: ({ row }) => (
+                <div className="flex items-center space-x-1">
+                  {row.status !== 'Off Duty' && row.batteryFriendly && (
+                    <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Battery-friendly GPS active"></span>
+                  )}
+                  <span>{row.generalLocation}</span>
+                </div>
+              ),
+            },
+            {
+              id: 'vehicle',
+              header: 'Assigned Vehicle',
+              accessorKey: 'assignedVehicle',
+            },
+            {
+              id: 'lastUpdate',
+              header: 'Last Update',
+              accessorKey: 'lastUpdate',
+              cell: ({ row }) => (
+                <span className="text-gray-500">{row.lastUpdate}</span>
+              ),
+            },
+            {
+              id: 'actions',
+              header: 'Actions',
+              sortable: false,
+              cell: ({ row }) => (
+                <div className="flex space-x-2">
+                  <Link href={`/dashboard/drivers/${row.id}`} className="text-gray-600 hover:text-primary-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </Link>
+                  <Link href={`/dashboard/drivers/edit/${row.id}`} className="text-gray-600 hover:text-primary-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                    </svg>
+                  </Link>
+                  {row.status !== 'Off Duty' && row.activeLoads > 0 && (
+                    <div className="flex items-center">
+                      <span className="bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3 mr-1">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
                         </svg>
-                      </Link>
-                      <Link href={`/dashboard/drivers/edit/${driver.id}`} className="text-gray-600 hover:text-primary-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                        </svg>
-                      </Link>
-                      {driver.status !== 'Off Duty' && driver.activeLoads > 0 && (
-                        <div className="flex items-center">
-                          <span className="bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3 mr-1">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-                            </svg>
-                            {driver.activeLoads}
-                          </span>
-                        </div>
-                      )}
+                        {row.activeLoads}
+                      </span>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  )}
+                </div>
+              ),
+            },
+          ]}
+          defaultSortColumn="id"
+          defaultSortDirection="asc"
+          storageKey="drivers-table"
+          emptyMessage="No drivers found matching your criteria."
+        />
         
         <div className="p-4 border-t border-gray-100 flex justify-between items-center">
           <div className="text-sm text-gray-600">
