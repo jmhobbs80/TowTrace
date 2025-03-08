@@ -3,6 +3,27 @@
 import { useState, useEffect } from 'react';
 import SortableTable, { ColumnDef } from '@/components/SortableTable';
 
+// Time constants (in milliseconds)
+const ONE_HOUR_MS = 60 * 60 * 1000;
+const ONE_DAY_MS = 24 * ONE_HOUR_MS;
+const SEVEN_DAYS_MS = 7 * ONE_DAY_MS;
+const TWO_HOURS_MS = 2 * ONE_HOUR_MS;
+const THREE_HOURS_MS = 3 * ONE_HOUR_MS;
+const FIVE_HOURS_MS = 5 * ONE_HOUR_MS;
+const TWELVE_HOURS_MS = 12 * ONE_HOUR_MS;
+
+// Duration constants (in minutes)
+const ONE_HOUR_MINUTES = 60;
+const TWO_HOURS_MINUTES = 120;
+const FIVE_HOURS_MINUTES = 300;
+const TEN_HOURS_MINUTES = 600;
+
+// Distance constants
+const NEARBY_DISTANCE_KM = 0.1; // 100 meters
+
+// API simulation constants
+const API_SIMULATION_DELAY_MS = 1000;
+
 interface Driver {
   id: string;
   name: string;
@@ -32,13 +53,21 @@ interface EldLog {
   notes?: string;
 }
 
+/**
+ * EldLogsPage - Electronic Logging Device logs dashboard
+ * 
+ * Displays a comprehensive view of driver ELD logs with filtering capabilities.
+ * Shows driver status, log details, and allows filtering by driver, status, and date range.
+ * 
+ * @returns {JSX.Element} The ELD logs page component
+ */
 export default function EldLogsPage() {
   const [logs, setLogs] = useState<EldLog[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [selectedDriver, setSelectedDriver] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateRange, setDateRange] = useState<{start: string, end: string}>({
-    start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days ago
+    start: new Date(Date.now() - SEVEN_DAYS_MS).toISOString().split('T')[0], // 7 days ago
     end: new Date().toISOString().split('T')[0], // today
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -69,7 +98,7 @@ export default function EldLogsPage() {
           name: 'Mike Johnson',
           email: 'mike.johnson@towtrace.com',
           status: 'offline',
-          lastActive: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+          lastActive: new Date(Date.now() - TWO_HOURS_MS).toISOString(), // 2 hours ago
         },
       ];
       
@@ -80,14 +109,14 @@ export default function EldLogsPage() {
           driverId: '1',
           driverName: 'John Driver',
           status: 'driving',
-          startTime: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
-          endTime: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
+          startTime: new Date(Date.now() - THREE_HOURS_MS).toISOString(), // 3 hours ago
+          endTime: new Date(Date.now() - ONE_HOUR_MS).toISOString(), // 1 hour ago
           location: {
             latitude: 40.7128,
             longitude: -74.0060,
             address: '123 Main St, New York, NY',
           },
-          duration: 120, // 2 hours
+          duration: TWO_HOURS_MINUTES, // 2 hours
           vehicle: {
             id: 'v1',
             name: 'Truck 101',
@@ -99,14 +128,14 @@ export default function EldLogsPage() {
           driverId: '1',
           driverName: 'John Driver',
           status: 'on_duty',
-          startTime: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
+          startTime: new Date(Date.now() - ONE_HOUR_MS).toISOString(), // 1 hour ago
           endTime: null,
           location: {
             latitude: 40.7128,
             longitude: -74.0060,
             address: '456 Park Ave, New York, NY',
           },
-          duration: 60, // 1 hour
+          duration: ONE_HOUR_MINUTES, // 1 hour
           vehicle: {
             id: 'v1',
             name: 'Truck 101',
@@ -119,14 +148,14 @@ export default function EldLogsPage() {
           driverId: '2',
           driverName: 'Sarah Smith',
           status: 'driving',
-          startTime: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+          startTime: new Date(Date.now() - FIVE_HOURS_MS).toISOString(), // 5 hours ago
           endTime: null,
           location: {
             latitude: 34.0522,
             longitude: -118.2437,
             address: '789 Sunset Blvd, Los Angeles, CA',
           },
-          duration: 300, // 5 hours
+          duration: FIVE_HOURS_MINUTES, // 5 hours
           vehicle: {
             id: 'v2',
             name: 'Truck 202',
@@ -138,14 +167,14 @@ export default function EldLogsPage() {
           driverId: '3',
           driverName: 'Mike Johnson',
           status: 'off_duty',
-          startTime: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(), // 12 hours ago
-          endTime: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+          startTime: new Date(Date.now() - TWELVE_HOURS_MS).toISOString(), // 12 hours ago
+          endTime: new Date(Date.now() - TWO_HOURS_MS).toISOString(), // 2 hours ago
           location: {
             latitude: 41.8781,
             longitude: -87.6298,
             address: '101 Michigan Ave, Chicago, IL',
           },
-          duration: 600, // 10 hours
+          duration: TEN_HOURS_MINUTES, // 10 hours
           vehicle: {
             id: 'v3',
             name: 'Truck 303',
@@ -157,14 +186,14 @@ export default function EldLogsPage() {
           driverId: '3',
           driverName: 'Mike Johnson',
           status: 'sleeping',
-          startTime: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+          startTime: new Date(Date.now() - TWO_HOURS_MS).toISOString(), // 2 hours ago
           endTime: null,
           location: {
             latitude: 41.8781,
             longitude: -87.6298,
             address: 'Rest Area I-94, Chicago, IL',
           },
-          duration: 120, // 2 hours
+          duration: TWO_HOURS_MINUTES, // 2 hours
           vehicle: {
             id: 'v3',
             name: 'Truck 303',
@@ -177,7 +206,7 @@ export default function EldLogsPage() {
       setDrivers(mockDrivers);
       setLogs(mockLogs);
       setIsLoading(false);
-    }, 1000);
+    }, API_SIMULATION_DELAY_MS);
     
     return () => clearTimeout(timer);
   }, []);
@@ -196,7 +225,12 @@ export default function EldLogsPage() {
     return matchesDriver && matchesStatus && matchesDate;
   });
 
-  // Format duration from minutes to readable format
+  /**
+   * Format duration from minutes to a human-readable string
+   * 
+   * @param {number} minutes - Duration in minutes
+   * @returns {string} Formatted duration string (e.g., "2h 30m")
+   */
   const formatDuration = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -210,7 +244,12 @@ export default function EldLogsPage() {
     }
   };
 
-  // Get color for status badge
+  /**
+   * Get the CSS color class for a status badge
+   * 
+   * @param {string} status - The driver status
+   * @returns {string} CSS class string for the status badge
+   */
   const getStatusColor = (status: string): string => {
     switch (status) {
       case 'driving':
@@ -226,7 +265,12 @@ export default function EldLogsPage() {
     }
   };
 
-  // Get formatted status text
+  /**
+   * Get a human-readable status text from status code
+   * 
+   * @param {string} status - The status code
+   * @returns {string} Human-readable status text
+   */
   const getStatusText = (status: string): string => {
     switch (status) {
       case 'on_duty':
@@ -242,13 +286,22 @@ export default function EldLogsPage() {
     }
   };
 
-  // Format date for display
+  /**
+   * Format date string for display
+   * 
+   * @param {string} dateString - ISO date string to format
+   * @returns {string} Formatted date and time string
+   */
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Handle clicking on a log to view details
+  /**
+   * Handle clicking on a log to toggle details view
+   * 
+   * @param {string} logId - The ID of the log to show/hide details for
+   */
   const handleLogClick = (logId: string) => {
     if (selectedLogId === logId) {
       setSelectedLogId(null);

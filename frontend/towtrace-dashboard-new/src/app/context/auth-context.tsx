@@ -1,6 +1,19 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { 
+  loginUser, 
+  registerUser, 
+  updateUser, 
+  saveUserToStorage, 
+  loadUserFromStorage,
+  clearUserFromStorage 
+} from '@/services/AuthService';
+import { 
+  handleGPSStatusChange, 
+  checkLocationArrival,
+  simulateLocationUpdate 
+} from '@/services/GPSTrackingService';
 
 // Expanded User type to include profile information
 export type UserRole = 'admin' | 'dispatcher' | 'driver' | 'manager' | 'system_admin' | 'client_admin';
@@ -69,7 +82,23 @@ const AuthContext = createContext<AuthContextType>({
   updateUserProfile: async () => {},
 });
 
-// Custom hook to use the auth context
+/**
+ * Custom hook to access the authentication context
+ * 
+ * Provides access to the current user, authentication state, and auth-related functions
+ * throughout the application.
+ * 
+ * @returns {AuthContextType} Authentication context with user data and auth functions
+ * 
+ * @example
+ * // In a component
+ * const { user, isAuthenticated, login, logout } = useAuth();
+ * 
+ * // Check if user is logged in
+ * if (!isAuthenticated) {
+ *   return <Navigate to="/login" />;
+ * }
+ */
 export const useAuth = () => useContext(AuthContext);
 
 // Mock user data for development
@@ -139,81 +168,36 @@ const MOCK_DRIVER: User = {
   },
 };
 
+/**
+ * AuthProvider - Authentication context provider component
+ * 
+ * Provides authentication state and functions to all child components.
+ * Handles user authentication, login, logout, profile updates, and simulates 
+ * location-based alerts for drivers.
+ * 
+ * @param {Object} props - Component props
+ * @param {ReactNode} props.children - Child components to render within the provider
+ * @returns {JSX.Element} The provider component with children
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Function to check if user is at pickup or dropoff location and show alert
-  const checkLocationArrival = (userData: User) => {
-    if (!userData || userData.role !== 'driver' || !userData.gpsEnabled) return;
-    
-    // Check for pickup location arrival
-    if (userData.currentLocation && userData.currentPickupLocation) {
-      // Calculate distance between current location and pickup location
-      const distanceToPickup = calculateDistance(
-        userData.currentLocation.lat,
-        userData.currentLocation.lng,
-        userData.currentPickupLocation.lat,
-        userData.currentPickupLocation.lng
-      );
-      
-      // If within 100 meters of pickup location, show alert to scan VINs
-      if (distanceToPickup < 0.1) { // 0.1 km = 100 meters
-        alert(`You have arrived at the pickup location: ${userData.currentPickupLocation.locationName}. Please scan the VINs of all vehicles to verify pickup.`);
-        return; // Early return to not show both alerts at once
-      }
-    }
-    
-    // Check for dropoff location arrival
-    if (userData.currentLocation && userData.currentDropoffLocation) {
-      // Calculate distance between current location and dropoff location
-      const distanceToDropoff = calculateDistance(
-        userData.currentLocation.lat,
-        userData.currentLocation.lng,
-        userData.currentDropoffLocation.lat,
-        userData.currentDropoffLocation.lng
-      );
-      
-      // If within 100 meters of dropoff location, show alert
-      if (distanceToDropoff < 0.1) { // 0.1 km = 100 meters
-        // Alert the driver to mark vehicles as dropped
-        alert(`You have arrived at the dropoff location: ${userData.currentDropoffLocation.locationName}. Please mark each vehicle as dropped to complete the delivery.`);
-      }
-    }
-  };
-  
-  // Function to calculate distance between two points (Haversine formula)
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371; // Radius of the earth in km
-    const dLat = deg2rad(lat2 - lat1);
-    const dLon = deg2rad(lon2 - lon1);
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2); 
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-    const distance = R * c; // Distance in km
-    return distance;
-  };
-  
-  // Convert degrees to radians
-  const deg2rad = (deg: number): number => {
-    return deg * (Math.PI/180);
-  };
+  // These functions have been moved to separate utility files
 
   // Check if user is already logged in on mount
   useEffect(() => {
     const checkUser = async () => {
       try {
         // Check localStorage for existing user data
-        const storedUser = localStorage.getItem('user');
+        const storedUser = loadUserFromStorage();
         
         if (storedUser) {
-          setUser(JSON.parse(storedUser));
+          setUser(storedUser);
         } else {
           // Auto-login for development with mock user
           setUser(MOCK_USER);
-          localStorage.setItem('user', JSON.stringify(MOCK_USER));
+          saveUserToStorage(MOCK_USER);
         }
         
         setIsLoading(false);
@@ -227,58 +211,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkUser();
   }, []);
 
-  // Update user profile
+  /**
+   * Update user profile with changes and handle GPS tracking if status changes
+   * 
+   * @param {Partial<User>} updatedUser - The user properties to update
+   */
   const updateUserProfile = async (updatedUser: Partial<User>) => {
     setIsLoading(true);
     try {
-      // In production, this would make an API call to update the user profile
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!user) {
+        throw new Error('No user logged in');
+      }
       
-      if (user) {
-        const newUserData = { ...user, ...updatedUser };
+      // Get base updated user data
+      let newUserData = await updateUser(user, updatedUser);
+      
+      // Handle GPS tracking changes if status is updated
+      if (updatedUser.status !== undefined) {
+        // Update GPS tracking status
+        newUserData.gpsEnabled = handleGPSStatusChange(newUserData, updatedUser.status);
         
-        // Special handling for GPS tracking status changes
-        if (updatedUser.status !== undefined) {
-          // Update GPS enabled status based on duty status
-          newUserData.gpsEnabled = updatedUser.status !== 'Off Duty';
+        // If GPS is enabled and user is a driver, simulate location updates
+        if (newUserData.gpsEnabled && newUserData.role === 'driver') {
+          newUserData = simulateLocationUpdate(newUserData);
           
-          // If status is changed to Off Duty, we need to simulate disabling GPS tracking
-          if (updatedUser.status === 'Off Duty') {
-            console.log('GPS tracking disabled due to Off Duty status');
-            // In a real implementation, this would call the tracking service to stop
-          } 
-          // If status is changed to On Duty and they have active loads, we need to simulate enabling GPS tracking
-          else if (updatedUser.status === 'On Duty' && newUserData.activeLoads && newUserData.activeLoads > 0) {
-            console.log('GPS tracking enabled due to On Duty status with active loads');
-            // In a real implementation, this would call the tracking service to start
-            
-            // Simulate location updates for demonstration purposes
-            if (newUserData.role === 'driver') {
-              // Set a random check for whether driver is near dropoff location (for demo purposes)
-              if (Math.random() > 0.7 && newUserData.currentDropoffLocation) {
-                // Simulate driver being near dropoff location
-                newUserData.currentLocation = {
-                  lat: newUserData.currentDropoffLocation.lat + (Math.random() * 0.001 - 0.0005),
-                  lng: newUserData.currentDropoffLocation.lng + (Math.random() * 0.001 - 0.0005),
-                  lastUpdated: new Date().toISOString()
-                };
-                
-                // Check if driver has arrived at pickup or dropoff location
-                checkLocationArrival(newUserData);
-              }
-            }
+          // Check for location arrival and show notification if needed
+          const arrivalMessage = checkLocationArrival(newUserData);
+          if (arrivalMessage) {
+            alert(arrivalMessage);
           }
         }
-        
-        // Update the user in state
-        setUser(newUserData);
-        
-        // Update localStorage to persist changes
-        localStorage.setItem('user', JSON.stringify(newUserData));
-        
-        console.log('Profile updated successfully');
       }
+      
+      // Update state and storage
+      setUser(newUserData);
+      saveUserToStorage(newUserData);
+      
+      console.log('Profile updated successfully');
     } catch (error) {
       console.error('Profile update error:', error);
       throw new Error('Failed to update profile');
@@ -287,41 +256,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Signup function
+  /**
+   * Register a new user account
+   * 
+   * @param {Partial<User>} userData - New user data
+   * @param {string} password - User password
+   */
   const signup = async (userData: Partial<User>, password: string) => {
     setIsLoading(true);
     try {
-      // In production, this would make an API call to create a new user
+      // Register the new user
+      const newUser = await registerUser(userData, password);
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Create a new user with default values for missing fields
-      const newUser: User = {
-        id: Math.floor(Math.random() * 10000).toString(), // Generate random ID
-        name: userData.name || '',
-        email: userData.email || '',
-        role: userData.role || 'driver',
-        avatar: `https://i.pravatar.cc/150?u=${userData.email}`,
-        lastLogin: new Date().toISOString(),
-        phoneNumber: userData.phoneNumber || '',
-        company: userData.company || 'TowTrace Transport',
-        jobTitle: userData.jobTitle || '',
-        timeZone: userData.timeZone || 'America/New_York',
-        bio: userData.bio || '',
-        preferences: {
-          emailNotifications: true,
-          pushNotifications: true,
-          smsNotifications: false,
-          weeklyReports: true,
-          theme: 'light',
-        },
-      };
-      
-      // Set the new user and save to localStorage
+      // Set the new user and save to storage
       setUser(newUser);
-      localStorage.setItem('user', JSON.stringify(newUser));
-      
+      saveUserToStorage(newUser);
     } catch (error) {
       console.error('Signup error:', error);
       throw new Error('Failed to create account');
@@ -330,36 +279,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Login function
+  /**
+   * Authenticate with email and password
+   * 
+   * @param {string} email - User email
+   * @param {string} password - User password
+   */
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // In production, this would make an API call to verify credentials
+      // Create mock users object for the auth service
+      const mockUsers = {
+        driver: MOCK_DRIVER,
+        admin: MOCK_USER
+      };
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Attempt login
+      const loggedInUser = await loginUser(email, password, mockUsers);
       
-      // Match user based on email
-      let loggedInUser;
-      
-      if (email.includes('driver')) {
-        loggedInUser = { 
-          ...MOCK_DRIVER, 
-          lastLogin: new Date().toISOString(),
-          email: email // Use the email from login attempt
-        };
-      } else {
-        loggedInUser = { 
-          ...MOCK_USER, 
-          lastLogin: new Date().toISOString(),
-          email: email // Use the email from login attempt
-        };
-      }
-      
-      // Save to state and localStorage
+      // Save authenticated user
       setUser(loggedInUser);
-      localStorage.setItem('user', JSON.stringify(loggedInUser));
-      
+      saveUserToStorage(loggedInUser);
     } catch (error) {
       console.error('Login error:', error);
       throw new Error('Invalid credentials');
@@ -368,19 +308,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Logout function
+  /**
+   * Log out the current user
+   */
   const logout = async () => {
     setIsLoading(true);
     try {
-      // In production, this would make an API call to invalidate the session
-      
-      // Simulate API delay
+      // Simulate API delay for session invalidation
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Clear user from state and localStorage
+      // Clear user from state and storage
       setUser(null);
-      localStorage.removeItem('user');
-      
+      clearUserFromStorage();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {

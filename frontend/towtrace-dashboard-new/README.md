@@ -10,24 +10,37 @@ This is the web dashboard for the TowTrace application, built with Next.js 13 an
 - 📋 Job assignment and tracking
 - 📱 Responsive design that works on desktop and mobile
 - 🎨 Apple-inspired design system
+- 🔒 Secure, role-based authentication
+- 📊 ELD logs with FMCSA compliance reporting
+- 📍 Battery-friendly GPS tracking
+- 💳 QuickBooks integration for financial management
+- 📈 Advanced analytics and reporting
 
 ## Project Structure
 
 - `src/app/` - Main application code using Next.js App Router
   - `page.tsx` - Landing page
   - `layout.tsx` - Root layout with common elements
+  - `context/` - React Context providers
   - `dashboard/` - Dashboard pages
     - `page.tsx` - Dashboard overview
     - `vehicles/` - Vehicle management
     - `drivers/` - Driver management
     - `jobs/` - Job management
+    - `eld-logs/` - ELD compliance logs
+    - `inspections/` - Vehicle inspections
+    - `documents/` - Driver documents
+    - `settings/` - Application settings
+- `src/components/` - Shared UI components
+- `src/services/` - Business logic and API services
+- `src/utils/` - Utility functions and helpers
 - `public/` - Static assets
 
 ## Development
 
 ### Prerequisites
 
-- Node.js 16.8.0 or later
+- Node.js 18.0.0 or later
 - npm or yarn
 
 ### Getting Started
@@ -87,13 +100,51 @@ To configure the API connection, create a `.env.local` file at the project root:
 NEXT_PUBLIC_API_URL=https://towtrace-api.justin-michael-hobbs.workers.dev
 ```
 
+## Testing
+
+The project includes comprehensive unit tests for:
+
+- Utility functions (`/utils`)
+- Services (`/services`)
+- Context providers (`/app/context`)
+
+Run tests with:
+
+```bash
+# Run all tests
+npm test
+
+# Run tests with coverage report
+npm test -- --coverage
+
+# Run tests in watch mode (during development)
+npm test -- --watch
+```
+
+### Code Quality
+
+The codebase follows these standards:
+
+- All functions must be less than 50 lines where possible
+- Every function must have JSDoc comments describing purpose, params, and return values
+- Magic numbers are replaced with named constants
+- File names match their primary export
+
+## Authentication
+
+Authentication uses Google OAuth via NextAuth.js. For local development, the system uses mock authentication with predefined test users:
+
+- **Admin User**: Used for administrative testing (auto-login when not in production)
+- **Driver User**: Used for driver-specific feature testing
+
 ## Troubleshooting
 
 If you encounter any issues:
 
-1. Make sure your Node.js version is 16.8.0 or later
+1. Make sure your Node.js version is 18.0.0 or later
 2. Delete the `.next` folder and run `npm run dev` again
 3. Check for any error messages in the console
+4. Make sure all tests are passing with `npm test`
 
 ## License
 

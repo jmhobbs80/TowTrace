@@ -10,7 +10,7 @@
 - Technology: React Native, Next.js, TypeScript, Cloudflare Workers
 - Domain: www.towtrace.com (for web), localhost:3000 (for web development)
 - Environment: Node.js, npm
-- Current Date: March 4, 2025
+- Current Date: March 8, 2025
 
 ## Application Features
 
@@ -18,7 +18,7 @@
 
 - **Multi-Tenant Architecture**:
   - Support for multiple towing companies with isolated data
-  - Role-based access control (admin, dispatch, driver)
+  - Role-based access control (system_admin, client_admin, admin, dispatch, driver)
   - Subscription-based feature access
   - Overwatch admin panel for system administrators
 
@@ -62,6 +62,7 @@
   - ELD (Electronic Logging Device) integration for Hours of Service compliance
   - Storage tracking for vehicles in yard management
   - Law enforcement integration tools
+  - DriverWallet for document storage and expiration tracking
 
 - **TowTraceDispatchApp-New Specific Features**:
   - Real-time vehicle tracking for fleet management, displayed on maps with vehicle details
@@ -74,6 +75,7 @@
   - Advanced routing with ETA calculation and optimization
   - Customer management and communication tools
   - Quickbooks integration for invoicing
+  - Task management system for creating, assigning, and tracking tasks
 
 ### Web App (TowTrace Dashboard)
 
@@ -97,6 +99,8 @@
   - QuickBooks integration for financial management
   - Advanced analytics and reporting
   - Customer portal access management
+  - Driver document management with expiration tracking
+  - User notification center with customizable preferences
 
 ## Dependencies
 
@@ -175,7 +179,9 @@
 
 - **Database**:
   - D1 SQL database with comprehensive schema
-  - Tables for tenants, users, vehicles, jobs, tracking, etc.
+  - Tables for tenants, users, vehicles, jobs, job_stops, tracking_locations, eld_devices, eld_hours_of_service, driver_documents, tasks, etc.
+  - Document storage with expiration tracking
+  - User notification preferences system
   - Relational data model with proper foreign keys
 
 - **API Structure**:
@@ -226,6 +232,7 @@
 - `/jobs`: Job assignment and tracking
 - `/tracking`: GPS location tracking
 - `/inspections`: Vehicle inspection reports
+- `/tasks`: Task management endpoints for creating, listing, fetching, and deleting tasks
 
 ### Specialized Endpoints
 - **Overwatch Admin Endpoints**:
@@ -240,10 +247,25 @@
   - `GET /api/eld/devices`: Get devices
   - `GET /api/eld/drivers/:driverId/hos`: Get driver hours of service
 
+- **Driver Documents Endpoints**:
+  - `POST /api/driver/documents`: Upload driver document
+  - `GET /api/driver/documents/:driverId`: Get driver documents
+  - `GET /api/notifications/document-expirations`: Get expiring documents
+
 - **Subscription Endpoints**:
   - `POST /api/subscriptions/payments`: Create payment
   - `GET /api/subscriptions/payments/:tenantId`: Get tenant payments
   - `GET /api/subscriptions/pricing`: Get pricing info
+  
+- **Premium Tier Endpoints**:
+  - `/api/analytics/basic/*`: Basic analytics endpoints
+  - `/api/storage/*`: Storage and document management endpoints
+
+- **Enterprise Tier Endpoints**:
+  - `/api/ai/*`: AI-powered insights and automation
+  - `/api/advanced-routing/*`: Advanced routing algorithms
+  - `/api/customer-portal/*`: Customer portal access
+  - `/api/law-enforcement/*`: Law enforcement integration
 
 ## Launch Preparation Tasks
 
@@ -387,3 +409,33 @@ npm run dev
 - Mobile apps support offline functionality with queue systems for uploads when connectivity is restored
 - API requests use Bearer token authentication with Google OAuth
 - The design is clean, minimalist, and follows modern mobile UI/UX best practices
+
+## Code Quality Standards
+
+- All functions must be less than 50 lines where possible
+- Every function must have mandatory comments describing purpose, params, and return values
+- Follow function-comment-template.md for proper JSDoc comment format
+- Include Mermaid diagrams with every PR using pr-mermaid-template.md
+- No feature removal without approval
+- Follow TypeScript best practices (proper types, no 'any' where avoidable)
+- Follow security best practices (no exposed API keys, proper authentication)
+- File names must reflect their contained functions/components
+  - Example: UserProfileCard.tsx should contain a UserProfileCard component
+  - Example: formatCurrency.ts should contain currency formatting utilities
+  - Example: taskCreate.ts should handle task creation endpoints
+
+## Linting and Code Quality Tools
+
+Run the lint-project.sh script to perform comprehensive code quality checks:
+
+```bash
+cd /mnt/c/users/jhobb/towtrace
+./lint-project.sh
+```
+
+This script will:
+1. Run ESLint on all components
+2. Perform TypeScript type checks
+3. Identify functions over 50 lines
+4. Find potentially unused imports
+5. Generate a comprehensive lint report
